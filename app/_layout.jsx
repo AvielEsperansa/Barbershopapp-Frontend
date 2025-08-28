@@ -11,6 +11,8 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          <Stack.Screen name="(customerTabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(barberTabs)" options={{ headerShown: false }} />
         </Stack>
       </SafeScreen>
       <StatusBar style="dark" />
