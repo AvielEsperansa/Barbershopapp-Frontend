@@ -73,14 +73,14 @@ export default function Index() {
       <View style={styles.actions}>
         <Pressable
           style={styles.primaryButton}
-          onPress={() => router.push('/(auth)/')}
+          onPress={() => router.replace('/(auth)/')}
         >
           <Text style={styles.primaryButtonText}>התחברו</Text>
         </Pressable>
 
         <Pressable
           style={styles.secondaryButton}
-          onPress={() => router.push('/(auth)/signup')}
+          onPress={() => router.replace('/(auth)/signup')}
         >
           <Text style={styles.secondaryButtonText}>הירשמו</Text>
         </Pressable>

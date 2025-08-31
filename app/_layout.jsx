@@ -13,6 +13,10 @@ export default function RootLayout() {
           <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           <Stack.Screen name="(customerTabs)" options={{ headerShown: false }} />
           <Stack.Screen name="(barberTabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="editProfile" options={{ headerShown: false }} />
+          <Stack.Screen name="myAppointments" options={{ headerShown: false }} />
+          <Stack.Screen name="security" options={{ headerShown: false }} />
+          <Stack.Screen name="haircutHistory" options={{ headerShown: false }} />
         </Stack>
       </SafeScreen>
       <StatusBar style="dark" />

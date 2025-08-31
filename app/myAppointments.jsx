@@ -1,0 +1,129 @@
+import { MaterialCommunityIcons } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
+import { useFocusEffect } from '@react-navigation/native'
+import React, { useCallback, useEffect, useState } from 'react'
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native'
+import config from '../config'
+
+export default function MyAppointments() {
+    const tabBarHeight = useBottomTabBarHeight()
+    const [loading, setLoading] = useState(false)
+    const [error, setError] = useState('')
+    const [appointments, setAppointments] = useState([])
+
+    const load = useCallback(async () => {
+        setLoading(true)
+        setError('')
+        try {
+            const accessToken = await AsyncStorage.getItem('accessToken')
+            const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
+            const res = await fetch(`${config.BASE_URL}/appointments/my-appointments`, { headers })
+            const json = await res.json()
+            if (!res.ok) throw new Error(json?.error || 'Failed to load appointments')
+            const list = json.appointments || json.data || (Array.isArray(json) ? json : [])
+            const todayKey = new Date().toISOString().split('T')[0]
+            const isCanceled = (a) => {
+                const st = (a.status || a.state || '').toString().toLowerCase()
+                return st === 'canceled' || st === 'cancelled' || a.isCanceled || a.isCancelled || !!a.canceledAt || !!a.cancelledAt
+            }
+            const toDayKey = (a) => {
+                const dateStr = a.date || a.startDate || a.start
+                if (!dateStr) return null
+                const d = new Date(dateStr)
+                if (Number.isNaN(d.getTime())) return null
+                return d.toISOString().split('T')[0]
+            }
+            const upcoming = (Array.isArray(list) ? list : [])
+                .filter((a) => !isCanceled(a))
+                .map((a) => ({ a, dayKey: toDayKey(a) }))
+                .filter(({ dayKey }) => !!dayKey && dayKey >= todayKey)
+                .sort((x, y) => (x.dayKey < y.dayKey ? -1 : x.dayKey > y.dayKey ? 1 : 0))
+                .map(({ a }) => a)
+            setAppointments(upcoming)
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Failed to load appointments')
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => { load() }, [load])
+    useFocusEffect(useCallback(() => { load() }, [load]))
+
+    const Row = ({ label, value }) => (
+        <View style={styles.row}>
+            <Text style={styles.rowLabel}>{label}</Text>
+            <Text style={styles.rowValue}>{value}</Text>
+        </View>
+    )
+
+    return (
+        <ScrollView contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 24 }]}>
+            <View style={styles.header}>
+                <MaterialCommunityIcons name="calendar" size={22} color="#111827" />
+                <Text style={styles.title}>התורים הקרובים שלי</Text>
+            </View>
+
+            {!!error && <Text style={styles.error}>{error}</Text>}
+            {loading && (
+                <View style={styles.loading}><ActivityIndicator size="large" color="#3b82f6" /></View>
+            )}
+
+            {appointments.length === 0 && !loading && (
+                <Text style={styles.empty}>אין תורים להצגה</Text>
+            )}
+
+            {appointments.map((appt) => (
+                <View key={appt._id || appt.id} style={styles.card}>
+                    <Row label="תאריך:" value={(() => { const d = new Date(appt.date || appt.startDate || appt.startTime); return isNaN(d) ? '-' : d.toLocaleDateString('he-IL') })()} />
+                    <Row label="שעה:" value={appt.startTime || (appt.time && appt.time.start) || '-'} />
+                    {!!(appt.service?.name || appt.serviceName) && (
+                        <Row label="טיפול:" value={appt.service?.name || appt.serviceName} />
+                    )}
+                    {!!(appt.barber?.firstName || appt.barberName) && (
+                        <Row label="ספר:" value={appt.barber?.firstName ? `${appt.barber.firstName} ${appt.barber.lastName || ''}`.trim() : appt.barberName} />
+                    )}
+                </View>
+            ))}
+        </ScrollView>
+    )
+}
+
+const styles = StyleSheet.create({
+    container: {
+        padding: 16,
+        gap: 12,
+        backgroundColor: '#f8fafc'
+    },
+    header: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 4
+    },
+    title: {
+        fontSize: 18,
+        fontWeight: '700',
+        color: '#111827'
+    },
+    card: {
+        backgroundColor: '#fff',
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+        borderRadius: 12,
+        padding: 12,
+        gap: 6
+    },
+    row: {
+        flexDirection: 'row-reverse',
+        justifyContent: 'space-between'
+    },
+    rowLabel: { color: '#6b7280' },
+    rowValue: { color: '#111827', fontWeight: '600' },
+    error: { color: '#b91c1c', textAlign: 'center' },
+    empty: { color: '#6b7280', textAlign: 'center', marginTop: 12 },
+    loading: { alignItems: 'center', paddingVertical: 20 }
+})
+
+

@@ -3,9 +3,9 @@ import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
 import { Alert, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import config from '../../config';
 
-const API_URL = 'http://172.20.10.3:4000'
-console.log('API_URL:', API_URL)
+console.log('API_URL:', `${config.BASE_URL}/users/login`)
 
 // Register for push notifications and send token to backend
 async function registerForPushNotificationsAsync(accessToken) {
@@ -31,7 +31,7 @@ async function registerForPushNotificationsAsync(accessToken) {
 
         console.log('📱 Expo Push Token:', pushToken);
 
-        await fetch(`${API_URL}/notifications/register`, {
+        await fetch(`${config.BASE_URL}/notifications/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
@@ -61,7 +61,7 @@ export default function Index() {
                 return false;
             }
 
-            const response = await fetch(`${API_URL}/auth/refresh`, {
+            const response = await fetch(`${config.BASE_URL}/auth/refresh`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ refreshToken }),
@@ -91,7 +91,7 @@ export default function Index() {
         }
         setLoading(true);
         try {
-            const res = await fetch(`${API_URL}/users/login`, {
+            const res = await fetch(`${config.BASE_URL}/users/login`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ email: email.toLowerCase().trim(), password }),
@@ -103,11 +103,11 @@ export default function Index() {
                 Alert.alert("Error", data?.error || "Login failed");
             }
             else {
-                // Store tokens - check if they're nested in 'tokens' or directly in 'data'
+                // Store tokens and user info (API returns user object)
                 const accessToken = data.tokens?.accessToken || data.accessToken;
                 const refreshToken = data.tokens?.refreshToken || data.refreshToken;
-                const userId = data.userId || data._id || data.id;
-                const role = data.role;
+                const userId = data.user?.id || data.user?._id || data.userId || data._id || data.id;
+                const role = data.user?.role || data.role;
 
                 console.log('Extracted values:', { accessToken, refreshToken, userId, role });
 
