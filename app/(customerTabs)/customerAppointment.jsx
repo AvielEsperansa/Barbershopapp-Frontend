@@ -1,10 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import React, { useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native'
 import { Calendar } from 'react-native-calendars'
 import config from '../../config'
+import apiClient from '../../lib/apiClient'
 
 const STEP = {
     BARBER: 0,
@@ -25,7 +25,6 @@ export default function CustomerAppointment() {
 
     const [selectedBarber, setSelectedBarber] = useState(null)
     const [selectedService, setSelectedService] = useState(null)
-    const [workingHours, setWorkingHours] = useState([])
 
     const [selectedDate, setSelectedDate] = useState(null) // stores date object or YYYY-MM-DD
     const [availableSlots, setAvailableSlots] = useState([])
@@ -70,14 +69,12 @@ export default function CustomerAppointment() {
 
     useEffect(() => {
         const fetchBarbers = async () => {
-            const accessToken = await AsyncStorage.getItem('accessToken')
-            const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
             const endpoints = [
                 `${config.BASE_URL}/users/barbers`,
             ]
             for (const url of endpoints) {
                 try {
-                    const res = await fetch(url, { headers })
+                    const res = await apiClient.get(url)
                     if (!res.ok) continue
                     const json = await res.json()
                     const arr = json.users || json.barbers || json.data || json
@@ -97,7 +94,7 @@ export default function CustomerAppointment() {
             setError('')
             try {
                 // Load services
-                const servicesRes = await fetch(`${config.BASE_URL}/services`)
+                const servicesRes = await apiClient.get(`${config.BASE_URL}/services`)
                 const servicesJson = await servicesRes.json()
                 const servicesData = servicesJson.services || servicesJson
                 setServices(Array.isArray(servicesData) ? servicesData : [])
@@ -119,10 +116,8 @@ export default function CustomerAppointment() {
 
     const loadMyAppointments = async () => {
         try {
-            const accessToken = await AsyncStorage.getItem('accessToken')
-            const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
             const url = `${config.BASE_URL}/appointments/my-appointments`
-            const res = await fetch(url, { headers })
+            const res = await apiClient.get(url)
             const json = await res.json()
             if (!res.ok) {
                 setMyAppointments([])
@@ -161,11 +156,7 @@ export default function CustomerAppointment() {
         setLoading(false)
     }
 
-    const isDateWorking = (date) => {
 
-
-        return true
-    }
 
     const onSelectDate = async (date) => {
         // Support both Date and string keys from Calendar
@@ -188,7 +179,6 @@ export default function CustomerAppointment() {
         setLoading(true)
         setError('')
         try {
-            const accessToken = await AsyncStorage.getItem('accessToken')
             // וידוא שהתאריך בפורמט הנכון (YYYY-MM-DD)
             const formattedDate = typeof key === 'string' ? key : key.toISOString().split('T')[0]
 
@@ -202,12 +192,7 @@ export default function CustomerAppointment() {
                 date: formattedDate,
             }).toString()
             console.log('Fetching slots with query:', query)
-            const res = await fetch(`${config.BASE_URL}/appointments/slots?${query}`, {
-                method: 'GET',
-                headers: {
-                    Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
-                }
-            })
+            const res = await apiClient.get(`${config.BASE_URL}/appointments/slots?${query}`)
             const json = await res.json()
             console.log('Slots response:', json)
             if (!res.ok) {
@@ -240,11 +225,10 @@ export default function CustomerAppointment() {
             const d = new Date(today)
             d.setDate(today.getDate() + i)
             const key = toDateKey(d)
-            const working = isDateWorking(d)
+            // לא מסמנים תאריכים כלא זמינים מראש - נבדוק מול השרת כשהמשתמש בוחר תאריך
             marks[key] = {
-                disabled: !working,
-                disableTouchEvent: !working,
-                customStyles: working ? undefined : { text: { color: '#b91c1c' } }
+                disabled: false,
+                disableTouchEvent: false
             }
         }
         if (selectedDate) {
@@ -262,7 +246,6 @@ export default function CustomerAppointment() {
         setLoading(true)
         setError('')
         try {
-            const accessToken = await AsyncStorage.getItem('accessToken')
             const body = {
                 barberId: selectedBarber._id,
                 serviceId: selectedService._id,
@@ -270,14 +253,7 @@ export default function CustomerAppointment() {
                 startTime: selectedSlot.startTime,
                 notes,
             }
-            const res = await fetch(`${config.BASE_URL}/appointments`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    Authorization: accessToken ? `Bearer ${accessToken}` : undefined,
-                },
-                body: JSON.stringify(body)
-            })
+            const res = await apiClient.post(`${config.BASE_URL}/appointments`, body)
             const json = await res.json()
             if (!res.ok) {
                 throw new Error(json?.error || 'Failed to create appointment')
@@ -332,13 +308,8 @@ export default function CustomerAppointment() {
                     text: 'כן', style: 'destructive', onPress: async () => {
                         try {
                             setLoading(true)
-                            const accessToken = await AsyncStorage.getItem('accessToken')
-                            const headers = {
-                                'Content-Type': 'application/json',
-                                ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-                            }
                             const url = `${config.BASE_URL}/appointments/cancel/${apptId}`
-                            const res = await fetch(url, { method: 'DELETE', headers })
+                            const res = await apiClient.delete(url)
                             const json = await res.json().catch(() => ({}))
                             if (!res.ok) {
                                 Alert.alert('שגיאה', json?.error || 'נכשל לבטל את התור')
@@ -462,7 +433,6 @@ export default function CustomerAppointment() {
                         <Calendar
                             onDayPress={(day) => {
                                 const d = new Date(day.dateString)
-                                if (!isDateWorking(d)) return
                                 onSelectDate(d)
                             }}
                             markedDates={getMarkedDates()}
@@ -480,7 +450,7 @@ export default function CustomerAppointment() {
                             firstDay={0}
                             hideExtraDays
                         />
-                        <Text style={styles.helper}>ימים ללא עבודה/תורים מסומנים באדום</Text>
+                        <Text style={styles.helper}>לחץ על תאריך כדי לראות זמנים פנויים</Text>
                     </View>
                 )}
 

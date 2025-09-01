@@ -2,10 +2,10 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import * as Notifications from 'expo-notifications';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Pressable, StatusBar, StyleSheet, Text, TextInput, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, StatusBar, StyleSheet, Text, TextInput, TouchableWithoutFeedback, View } from 'react-native';
 import config from '../../config';
+import tokenManager from '../../lib/tokenManager';
 
-console.log('API_URL:', `${config.BASE_URL}/users/login`)
 
 // Register for push notifications and send token to backend
 async function registerForPushNotificationsAsync(accessToken) {
@@ -51,39 +51,7 @@ export default function Index() {
     const [emailFocused, setEmailFocused] = useState(false)
     const [passwordFocused, setPasswordFocused] = useState(false)
 
-    const refreshAccessToken = async () => {
-        try {
-            console.log("🔄 Refreshing access token...");
-            const refreshToken = await AsyncStorage.getItem("refreshToken");
 
-            if (!refreshToken) {
-                console.warn("⚠️ No refresh token found, redirecting to login...");
-                return false;
-            }
-
-            const response = await fetch(`${config.BASE_URL}/auth/refresh`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ refreshToken }),
-            });
-
-            const data = await response.json();
-
-            if (response.ok) {
-                console.log("✅ Token refreshed successfully!");
-                await AsyncStorage.setItem("accessToken", data.accessToken);
-                return true;
-            } else {
-                console.warn("⚠️ Refresh token expired, user must log in again.");
-                await AsyncStorage.removeItem("accessToken");
-                await AsyncStorage.removeItem("refreshToken");
-                return false;
-            }
-        } catch (error) {
-            console.error("❌ Error refreshing token:", error);
-            return false;
-        }
-    };
     const onSubmit = async () => {
         if (!email || !password) {
             Alert.alert("Error", "Please enter email and password.");
@@ -126,11 +94,14 @@ export default function Index() {
                     // Register for push notifications
                     await registerForPushNotificationsAsync(accessToken);
 
+                    // מתחיל את מערכת הרענון האוטומטי של הטוקנים
+                    tokenManager.startAutoRefresh();
+
                     Alert.alert("Success", "Logged in successfully!");
 
                     // Navigate based on role - use simpler paths that likely exist
                     if (role === "barber") {
-                        router.replace("/(barberTabs)");
+                        router.replace("/(barberTabs)/Dashboard");
                     } else {
                         router.replace("/(customerTabs)");
                     }
@@ -146,62 +117,68 @@ export default function Index() {
     };
 
     return (
-        <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.title}>ברוכים הבאים</Text>
-                <Text style={styles.subtitle}>התחברו לחשבון שלכם</Text>
-            </View>
-
-            <View style={styles.form}>
-                <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>אימייל</Text>
-                    <TextInput
-                        placeholder='הזינו את כתובת האימייל שלכם'
-                        placeholderTextColor="#999"
-                        autoCapitalize='none'
-                        keyboardType='email-address'
-                        value={email}
-                        onChangeText={setEmail}
-                        onFocus={() => setEmailFocused(true)}
-                        onBlur={() => setEmailFocused(false)}
-                        style={[styles.input, emailFocused && styles.inputFocused]}
-                    />
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardAvoidingView
+                style={styles.container}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
+                <View style={styles.header}>
+                    <Text style={styles.title}>ברוכים הבאים</Text>
+                    <Text style={styles.subtitle}>התחברו לחשבון שלכם</Text>
                 </View>
 
-                <View style={styles.inputContainer}>
-                    <Text style={styles.inputLabel}>סיסמה</Text>
-                    <TextInput
-                        placeholder='הזינו את הסיסמה שלכם'
-                        placeholderTextColor="#999"
-                        secureTextEntry
-                        value={password}
-                        onChangeText={setPassword}
-                        onFocus={() => setPasswordFocused(true)}
-                        onBlur={() => setPasswordFocused(false)}
-                        style={[styles.input, passwordFocused && styles.inputFocused]}
-                    />
+                <View style={styles.form}>
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>אימייל</Text>
+                        <TextInput
+                            placeholder='הזינו את כתובת האימייל שלכם'
+                            placeholderTextColor="#999"
+                            autoCapitalize='none'
+                            keyboardType='email-address'
+                            value={email}
+                            onChangeText={setEmail}
+                            onFocus={() => setEmailFocused(true)}
+                            onBlur={() => setEmailFocused(false)}
+                            style={[styles.input, emailFocused && styles.inputFocused]}
+                        />
+                    </View>
+
+                    <View style={styles.inputContainer}>
+                        <Text style={styles.inputLabel}>סיסמה</Text>
+                        <TextInput
+                            placeholder='הזינו את הסיסמה שלכם'
+                            placeholderTextColor="#999"
+                            secureTextEntry
+                            value={password}
+                            onChangeText={setPassword}
+                            onFocus={() => setPasswordFocused(true)}
+                            onBlur={() => setPasswordFocused(false)}
+                            style={[styles.input, passwordFocused && styles.inputFocused]}
+                        />
+                    </View>
+
+                    <Pressable
+                        onPress={onSubmit}
+                        disabled={loading}
+                        style={[styles.loginButton, loading && styles.loginButtonDisabled]}
+                    >
+                        <Text style={styles.loginButtonText}>
+                            {loading ? 'מתחבר...' : 'התחבר'}
+                        </Text>
+                    </Pressable>
+
+                    <Pressable
+                        style={styles.signupLink}
+                        onPress={() => router.push('/(auth)/signup')}
+                    >
+                        <Text style={styles.signupText}>
+                            אין לכם חשבון? <Text style={styles.signupLinkText}>הירשמו כאן</Text>
+                        </Text>
+                    </Pressable>
                 </View>
-
-                <Pressable
-                    onPress={onSubmit}
-                    disabled={loading}
-                    style={[styles.loginButton, loading && styles.loginButtonDisabled]}
-                >
-                    <Text style={styles.loginButtonText}>
-                        {loading ? 'מתחבר...' : 'התחבר'}
-                    </Text>
-                </Pressable>
-
-                <Pressable
-                    style={styles.signupLink}
-                    onPress={() => router.push('/(auth)/signup')}
-                >
-                    <Text style={styles.signupText}>
-                        אין לכם חשבון? <Text style={styles.signupLinkText}>הירשמו כאן</Text>
-                    </Text>
-                </Pressable>
-            </View>
-        </View>
+            </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
     )
 }
 

@@ -1,8 +1,9 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
 import React, { useState } from 'react';
-import { Alert, Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, Keyboard, KeyboardAvoidingView, Platform, Pressable, Text, TextInput, TouchableWithoutFeedback } from 'react-native';
 import config from '../../config';
+import tokenManager from '../../lib/tokenManager';
 
 export default function Signup() {
     const [firstName, setFirstName] = useState('')
@@ -49,6 +50,9 @@ export default function Signup() {
                     await AsyncStorage.setItem('refreshToken', data.refreshToken)
                 }
 
+                // מתחיל את מערכת הרענון האוטומטי של הטוקנים
+                tokenManager.startAutoRefresh();
+
                 Alert.alert('הצלחה', 'המשתמש נרשם בהצלחה! מתחבר אוטומטית...', [
                     {
                         text: 'אישור',
@@ -74,17 +78,23 @@ export default function Signup() {
     }
 
     return (
-        <View style={{ flex: 1, padding: 16, gap: 12, justifyContent: 'center' }}>
-            <Text style={{ fontSize: 24, fontWeight: '600', textAlign: 'center' }}>הרשמה</Text>
-            <TextInput placeholder='שם פרטי' value={firstName} onChangeText={setFirstName} style={{ borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, textAlign: 'right' }} />
-            <TextInput placeholder='שם משפחה' value={lastName} onChangeText={setLastName} style={{ borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, textAlign: 'right' }} />
-            <TextInput placeholder='אימייל' autoCapitalize='none' keyboardType='email-address' value={email} onChangeText={setEmail} style={{ borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, textAlign: 'right' }} />
-            <TextInput placeholder='טלפון (05xxxxxxxx)' keyboardType='phone-pad' value={phone} onChangeText={setPhone} style={{ borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, textAlign: 'right' }} />
-            <TextInput placeholder='סיסמה' secureTextEntry value={password} onChangeText={setPassword} style={{ borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, textAlign: 'right' }} />
-            {/* Simple role input; replace with picker if needed */}
-            <Pressable onPress={onSubmit} disabled={loading} style={{ backgroundColor: '#111', padding: 14, borderRadius: 8, opacity: loading ? 0.7 : 1 }}>
-                <Text style={{ color: 'white', textAlign: 'center', fontWeight: '600' }}>{loading ? 'שולח...' : 'צור חשבון'}</Text>
-            </Pressable>
-        </View>
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <KeyboardAvoidingView
+                style={{ flex: 1, padding: 16, gap: 12, justifyContent: 'center' }}
+                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+                keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+            >
+                <Text style={{ fontSize: 24, fontWeight: '600', textAlign: 'center' }}>הרשמה</Text>
+                <TextInput placeholder='שם פרטי' value={firstName} onChangeText={setFirstName} style={{ borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, textAlign: 'right' }} />
+                <TextInput placeholder='שם משפחה' value={lastName} onChangeText={setLastName} style={{ borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, textAlign: 'right' }} />
+                <TextInput placeholder='אימייל' autoCapitalize='none' keyboardType='email-address' value={email} onChangeText={setEmail} style={{ borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, textAlign: 'right' }} />
+                <TextInput placeholder='טלפון (05xxxxxxxx)' keyboardType='phone-pad' value={phone} onChangeText={setPhone} style={{ borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, textAlign: 'right' }} />
+                <TextInput placeholder='סיסמה' secureTextEntry value={password} onChangeText={setPassword} style={{ borderWidth: 1, borderColor: '#ccc', padding: 12, borderRadius: 8, textAlign: 'right' }} />
+                {/* Simple role input; replace with picker if needed */}
+                <Pressable onPress={onSubmit} disabled={loading} style={{ backgroundColor: '#111', padding: 14, borderRadius: 8, opacity: loading ? 0.7 : 1 }}>
+                    <Text style={{ color: 'white', textAlign: 'center', fontWeight: '600' }}>{loading ? 'שולח...' : 'צור חשבון'}</Text>
+                </Pressable>
+            </KeyboardAvoidingView>
+        </TouchableWithoutFeedback>
     )
 }

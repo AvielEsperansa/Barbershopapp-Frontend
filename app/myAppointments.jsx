@@ -1,13 +1,12 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { useFocusEffect } from '@react-navigation/native'
 import React, { useCallback, useEffect, useState } from 'react'
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import config from '../config'
+import apiClient from '../lib/apiClient'
+import SafeScreen from './components/SafeScreen'
 
 export default function MyAppointments() {
-    const tabBarHeight = useBottomTabBarHeight()
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState('')
     const [appointments, setAppointments] = useState([])
@@ -16,9 +15,7 @@ export default function MyAppointments() {
         setLoading(true)
         setError('')
         try {
-            const accessToken = await AsyncStorage.getItem('accessToken')
-            const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
-            const res = await fetch(`${config.BASE_URL}/appointments/my-appointments`, { headers })
+            const res = await apiClient.get(`${config.BASE_URL}/users/appointments/past`)
             const json = await res.json()
             if (!res.ok) throw new Error(json?.error || 'Failed to load appointments')
             const list = json.appointments || json.data || (Array.isArray(json) ? json : [])
@@ -51,6 +48,43 @@ export default function MyAppointments() {
     useEffect(() => { load() }, [load])
     useFocusEffect(useCallback(() => { load() }, [load]))
 
+    const onCancelAppointment = async (appointment) => {
+        const appt = appointment
+        if (!appt) return
+        const apptId = appt._id || appt.id
+        if (!apptId) {
+            Alert.alert('שגיאה', 'לא נמצא מזהה תור לביטול')
+            return
+        }
+        Alert.alert(
+            'ביטול תור',
+            'האם לבטל את התור?',
+            [
+                { text: 'לא', style: 'cancel' },
+                {
+                    text: 'כן', style: 'destructive', onPress: async () => {
+                        try {
+                            setLoading(true)
+                            const url = `${config.BASE_URL}/appointments/cancel/${apptId}`
+                            const res = await apiClient.delete(url)
+                            const json = await res.json().catch(() => ({}))
+                            if (!res.ok) {
+                                Alert.alert('שגיאה', json?.error || 'נכשל לבטל את התור')
+                            } else {
+                                Alert.alert('התור בוטל')
+                                // Optimistic UI: remove from list
+                                setAppointments((prev) => (prev || []).filter((x) => (x._id || x.id) !== apptId))
+                                await load()
+                            }
+                        } finally {
+                            setLoading(false)
+                        }
+                    }
+                }
+            ]
+        )
+    }
+
     const Row = ({ label, value }) => (
         <View style={styles.row}>
             <Text style={styles.rowLabel}>{label}</Text>
@@ -59,34 +93,39 @@ export default function MyAppointments() {
     )
 
     return (
-        <ScrollView contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 24 }]}>
-            <View style={styles.header}>
-                <MaterialCommunityIcons name="calendar" size={22} color="#111827" />
-                <Text style={styles.title}>התורים הקרובים שלי</Text>
-            </View>
-
-            {!!error && <Text style={styles.error}>{error}</Text>}
-            {loading && (
-                <View style={styles.loading}><ActivityIndicator size="large" color="#3b82f6" /></View>
-            )}
-
-            {appointments.length === 0 && !loading && (
-                <Text style={styles.empty}>אין תורים להצגה</Text>
-            )}
-
-            {appointments.map((appt) => (
-                <View key={appt._id || appt.id} style={styles.card}>
-                    <Row label="תאריך:" value={(() => { const d = new Date(appt.date || appt.startDate || appt.startTime); return isNaN(d) ? '-' : d.toLocaleDateString('he-IL') })()} />
-                    <Row label="שעה:" value={appt.startTime || (appt.time && appt.time.start) || '-'} />
-                    {!!(appt.service?.name || appt.serviceName) && (
-                        <Row label="טיפול:" value={appt.service?.name || appt.serviceName} />
-                    )}
-                    {!!(appt.barber?.firstName || appt.barberName) && (
-                        <Row label="ספר:" value={appt.barber?.firstName ? `${appt.barber.firstName} ${appt.barber.lastName || ''}`.trim() : appt.barberName} />
-                    )}
+        <SafeScreen paddingTop={5}>
+            <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 24 }]}>
+                <View style={styles.header}>
+                    <MaterialCommunityIcons name="calendar" size={22} color="#111827" />
+                    <Text style={styles.title}>התורים הקרובים שלי</Text>
                 </View>
-            ))}
-        </ScrollView>
+
+                {!!error && <Text style={styles.error}>{error}</Text>}
+                {loading && (
+                    <View style={styles.loading}><ActivityIndicator size="large" color="#3b82f6" /></View>
+                )}
+
+                {appointments.length === 0 && !loading && (
+                    <Text style={styles.empty}>אין תורים להצגה</Text>
+                )}
+
+                {appointments.map((appt) => (
+                    <View key={appt._id || appt.id} style={styles.card}>
+                        <Row label="תאריך:" value={(() => { const d = new Date(appt.date || appt.startDate || appt.startTime); return isNaN(d) ? '-' : d.toLocaleDateString('he-IL') })()} />
+                        <Row label="שעה:" value={appt.startTime || (appt.time && appt.time.start) || '-'} />
+                        {!!(appt.service?.name || appt.serviceName) && (
+                            <Row label="טיפול:" value={appt.service?.name || appt.serviceName} />
+                        )}
+                        {!!(appt.barber?.firstName || appt.barberName) && (
+                            <Row label="ספר:" value={appt.barber?.firstName ? `${appt.barber.firstName} ${appt.barber.lastName || ''}`.trim() : appt.barberName} />
+                        )}
+                        <Pressable style={styles.cancelButton} onPress={() => onCancelAppointment(appt)}>
+                            <Text style={styles.cancelButtonText}>ביטול תור</Text>
+                        </Pressable>
+                    </View>
+                ))}
+            </ScrollView>
+        </SafeScreen>
     )
 }
 
@@ -123,7 +162,21 @@ const styles = StyleSheet.create({
     rowValue: { color: '#111827', fontWeight: '600' },
     error: { color: '#b91c1c', textAlign: 'center' },
     empty: { color: '#6b7280', textAlign: 'center', marginTop: 12 },
-    loading: { alignItems: 'center', paddingVertical: 20 }
+    loading: { alignItems: 'center', paddingVertical: 20 },
+    cancelButton: {
+        backgroundColor: '#b91c1c',
+        paddingVertical: 8,
+        paddingHorizontal: 16,
+        borderRadius: 8,
+        alignSelf: 'flex-end',
+        marginTop: 8
+    },
+    cancelButtonText: {
+        color: '#ffffff',
+        fontSize: 14,
+        fontWeight: '600',
+        textAlign: 'center'
+    }
 })
 
 

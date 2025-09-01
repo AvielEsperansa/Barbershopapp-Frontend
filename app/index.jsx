@@ -1,6 +1,9 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect } from '@react-navigation/native';
 import { router } from "expo-router";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
+  ActivityIndicator,
   Dimensions,
   Pressable,
   StatusBar,
@@ -8,10 +11,81 @@ import {
   Text,
   View
 } from "react-native";
+import tokenManager from '../lib/tokenManager';
 
 const { width } = Dimensions.get('window');
 
 export default function Index() {
+  const [loading, setLoading] = useState(true);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const checkAuthStatus = async () => {
+      try {
+        // בודק אם המשתמש מחובר
+        const loggedIn = await tokenManager.isLoggedIn();
+        setIsLoggedIn(loggedIn);
+
+        if (loggedIn) {
+          // אם המשתמש מחובר, בודק את התפקיד שלו
+          const role = await AsyncStorage.getItem('role');
+
+          // מעביר אותו לטאב המתאים
+          if (role === 'barber') {
+            router.replace('/(barberTabs)/Dashboard');
+          } else {
+            router.replace('/(customerTabs)');
+          }
+        }
+      } catch (error) {
+        console.log('Error checking auth status:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    checkAuthStatus();
+  }, []);
+
+  // בודק את מצב ההתחברות כל פעם שהמשתמש חוזר לעמוד
+  useFocusEffect(
+    React.useCallback(() => {
+      const checkAuthOnFocus = async () => {
+        try {
+          const loggedIn = await tokenManager.isLoggedIn();
+          if (loggedIn) {
+            const role = await AsyncStorage.getItem('role');
+            if (role === 'barber') {
+              router.replace('/(barberTabs)/Dashboard');
+            } else {
+              router.replace('/(customerTabs)');
+            }
+          }
+        } catch (error) {
+          console.log('Error checking auth on focus:', error);
+        }
+      };
+
+      checkAuthOnFocus();
+    }, [])
+  );
+
+  // מציג loading בזמן בדיקת התחברות
+  if (loading) {
+    return (
+      <View style={[styles.container, styles.loadingContainer]}>
+        <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+        <ActivityIndicator size="large" color="#d4af37" />
+        <Text style={styles.loadingText}>בודק התחברות...</Text>
+      </View>
+    );
+  }
+
+  // אם המשתמש מחובר, לא מציג את עמוד הנחיתה
+  if (isLoggedIn) {
+    return null;
+  }
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
@@ -269,5 +343,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888888',
     textAlign: 'center',
+  },
+  loadingContainer: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    color: '#d4af37',
+    fontSize: 18,
+    marginTop: 20,
+    fontWeight: '500',
   },
 });

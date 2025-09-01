@@ -10,26 +10,26 @@ export default function _layout() {
                 headerShown: false,
                 tabBarShowLabel: true,
                 tabBarStyle: Platform.select({
-                    ios: { position: "absolute", backgroundColor: "white", height: 75 },
-                    default: { backgroundColor: "white", height: 75 },
+                    ios: { backgroundColor: "white", height: 75, paddingBottom: 20 },
+                    default: { backgroundColor: "white", height: 75, paddingBottom: 20 },
                 }),
             }}
         >
             <Tabs.Screen name="Dashboard" options={{
-                title: "Dashboard",
+                title: "דשבורד",
                 tabBarIcon: ({ color, size }) => (
                     <MaterialCommunityIcons name="home" color={color} size={size} />
                 ),
 
             }} />
             <Tabs.Screen name="Appointments" options={{
-                title: "Appointments",
+                title: "תורים",
                 tabBarIcon: ({ color, size }) => (
                     <MaterialCommunityIcons name="calendar" color={color} size={size} />
                 ),
             }} />
-            <Tabs.Screen name="Profile" options={{
-                title: "Profile",
+            <Tabs.Screen name="barberProfile" options={{
+                title: "פרופיל",
                 tabBarIcon: ({ color, size }) => (
                     <MaterialCommunityIcons name="account" color={color} size={size} />
                 ),

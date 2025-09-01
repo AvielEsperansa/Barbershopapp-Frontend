@@ -1,9 +1,10 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { router, useFocusEffect } from 'expo-router'
 import React, { useState } from 'react'
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import config from '../../config'
+import apiClient from '../../lib/apiClient'
+import tokenManager from '../../lib/tokenManager'
 
 export default function CustomerProfile() {
     const [loading, setLoading] = useState(false)
@@ -14,10 +15,8 @@ export default function CustomerProfile() {
             const fetchMe = async () => {
                 setLoading(true)
                 try {
-                    const accessToken = await AsyncStorage.getItem('accessToken')
-                    const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {}
                     const url = `${config.BASE_URL}/users/profile`
-                    const res = await fetch(url, { headers })
+                    const res = await apiClient.get(url)
                     const json = await res.json()
                     if (!res.ok)
                         throw new Error(json?.error || 'Failed to load user profile')
@@ -44,7 +43,8 @@ export default function CustomerProfile() {
 
     const onLogout = async () => {
         try {
-            await AsyncStorage.removeItem('accessToken')
+            // מנקה את כל הטוקנים ועוצר את הרענון האוטומטי
+            await tokenManager.clearTokens()
         } catch { }
         router.replace('/(auth)')
     }
@@ -115,10 +115,20 @@ export default function CustomerProfile() {
             <View style={styles.section}>
                 <Text style={styles.sectionTitle}>פעולות</Text>
                 <Row
+                    icon="calendar-clock"
+                    title="התורים שלי"
+                    subtitle="צפה בתורים עתידיים"
+                    onPress={() => router.push("/myAppointments")} />
+                <Row
                     icon="scissors-cutting"
                     title="היסטוריית תספורות"
                     subtitle="צפה בכל התורים הקודמים"
                     onPress={() => router.push("/haircutHistory")} />
+                <Row
+                    icon="help-circle"
+                    title="עזרה ותמיכה"
+                    subtitle="צור קשר עם בעל העסק"
+                    onPress={() => router.push("/help")} />
                 <Row
                     icon="logout"
                     title="התנתקות"
