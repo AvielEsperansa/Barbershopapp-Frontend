@@ -27,24 +27,23 @@ export default function HaircutHistory() {
             setLoading(true)
             setError('')
 
-            // קודם נקבל את ה-ID של הברבר הנוכחי
-            const profileResponse = await apiClient.get(`${config.BASE_URL}/users/profile`)
-            if (!profileResponse.ok) {
-                throw new Error('לא ניתן לטעון פרופיל')
-            }
+            console.log('🔍 Fetching customer haircut history')
 
-            const profileData = await profileResponse.json()
-            const barberId = profileData.user._id
-
-            console.log('🔍 Fetching haircut history for barber:', barberId)
-
-            // עכשיו נקבל את היסטוריית התספורות
-            const response = await apiClient.get(`${config.BASE_URL}/appointments/barber/${barberId}/completed`)
+            // נקבל את היסטוריית התספורות של הלקוח
+            const response = await apiClient.get(`${config.BASE_URL}/users/appointments/past`)
 
             if (response.ok) {
                 const data = await response.json()
                 console.log('✅ Haircut history received:', data)
-                setAppointments(data.appointments || [])
+
+                // נסנן רק תורים בעבר
+                const todayKey = new Date().toISOString().split('T')[0]
+                const pastAppointments = (data.appointments || []).filter(appointment => {
+                    const appointmentDate = new Date(appointment.date).toISOString().split('T')[0]
+                    return appointmentDate < todayKey
+                })
+
+                setAppointments(pastAppointments)
             } else {
                 console.error('❌ Failed to fetch haircut history:', response.status)
                 const errorText = await response.text()
@@ -121,22 +120,22 @@ export default function HaircutHistory() {
                         <MaterialCommunityIcons name="star" size={32} color="#f59e0b" />
                         <Text style={styles.statNumber}>
                             {appointments.length > 0
-                                ? (appointments.reduce((sum, app) => sum + (app.rating || 0), 0) / appointments.length).toFixed(1)
+                                ? (appointments.reduce((sum, app) => sum + (app.totalPrice || 0), 0) / appointments.length).toFixed(0)
                                 : '0'
                             }
                         </Text>
-                        <Text style={styles.statLabel}>דירוג ממוצע</Text>
+                        <Text style={styles.statLabel}>מחיר ממוצע</Text>
                     </View>
                 </View>
 
                 {/* Appointments List */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>תספורות שבוצעו</Text>
+                    <Text style={styles.sectionTitle}>היסטוריית התספורות שלי</Text>
 
                     {appointments.length === 0 ? (
                         <View style={styles.emptyContainer}>
                             <MaterialCommunityIcons name="scissors-cutting" size={48} color="#9ca3af" />
-                            <Text style={styles.emptyText}>אין תספורות שבוצעו עדיין</Text>
+                            <Text style={styles.emptyText}>אין היסטוריית תספורות</Text>
                             <Text style={styles.emptySubtext}>התספורות שבוצעו יופיעו כאן</Text>
                         </View>
                     ) : (
@@ -146,17 +145,17 @@ export default function HaircutHistory() {
                                     <View style={styles.customerInfo}>
                                         <MaterialCommunityIcons name="account" size={20} color="#6b7280" />
                                         <Text style={styles.customerName}>
-                                            {appointment.customer?.firstName || 'לקוח לא ידוע'}
+                                            {appointment.barber?.firstName || 'ספר לא ידוע'}
                                         </Text>
                                     </View>
                                     <View style={styles.ratingContainer}>
-                                        {appointment.rating ? (
+                                        {appointment.totalPrice ? (
                                             <>
-                                                <MaterialCommunityIcons name="star" size={16} color="#f59e0b" />
-                                                <Text style={styles.ratingText}>{appointment.rating}</Text>
+                                                <MaterialCommunityIcons name="currency-ils" size={16} color="#10b981" />
+                                                <Text style={styles.ratingText}>{appointment.totalPrice}</Text>
                                             </>
                                         ) : (
-                                            <Text style={styles.noRatingText}>ללא דירוג</Text>
+                                            <Text style={styles.noRatingText}>ללא מחיר</Text>
                                         )}
                                     </View>
                                 </View>
@@ -172,7 +171,7 @@ export default function HaircutHistory() {
                                     <View style={styles.detailRow}>
                                         <MaterialCommunityIcons name="clock" size={16} color="#6b7280" />
                                         <Text style={styles.detailText}>
-                                            {formatTime(appointment.time)}
+                                            {appointment.startTime} - {appointment.endTime}
                                         </Text>
                                     </View>
 
@@ -316,9 +315,9 @@ const styles = StyleSheet.create({
         gap: 4
     },
     ratingText: {
-        fontSize: 14,
+        fontSize: 16,
         fontWeight: '600',
-        color: '#f59e0b'
+        color: '#10b981'
     },
     noRatingText: {
         fontSize: 14,

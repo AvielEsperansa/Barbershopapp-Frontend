@@ -161,14 +161,8 @@ export default function CustomerAppointment() {
     const onSelectDate = async (date) => {
         // Support both Date and string keys from Calendar
         const key = typeof date === 'string' ? date : toDateKey(date)
-        setSelectedDate(key)
-        setSelectedSlot(null)
-        if (!selectedBarber || !selectedBarber._id) {
-            Alert.alert('שגיאה', 'לא נבחר ספר או אין ID לספר')
-            return
-        }
 
-        // בדיקה שהתאריך לא בעבר
+        // בדיקה שהתאריך לא בעבר - לפני כל דבר אחר
         const selectedDateObj = new Date(key)
         const today = new Date()
         today.setHours(0, 0, 0, 0)
@@ -176,6 +170,14 @@ export default function CustomerAppointment() {
             Alert.alert('שגיאה', 'לא ניתן לבחור תאריך בעבר')
             return
         }
+
+        setSelectedDate(key)
+        setSelectedSlot(null)
+        if (!selectedBarber || !selectedBarber._id) {
+            Alert.alert('שגיאה', 'לא נבחר ספר או אין ID לספר')
+            return
+        }
+
         setLoading(true)
         setError('')
         try {
@@ -218,19 +220,28 @@ export default function CustomerAppointment() {
     }
 
     const getMarkedDates = () => {
-        // Mark next 30 days: disable non-working days (red), enable working days
+        // Mark all dates: disable past days (not today)
         const marks = {}
         const today = new Date()
-        for (let i = 0; i < 30; i++) {
+        today.setHours(0, 0, 0, 0) // Reset time to start of day
+
+        // נסמן את כל התאריכים מ-30 ימים אחורה ועד 60 ימים קדימה
+        for (let i = -30; i < 60; i++) {
             const d = new Date(today)
             d.setDate(today.getDate() + i)
             const key = toDateKey(d)
-            // לא מסמנים תאריכים כלא זמינים מראש - נבדוק מול השרת כשהמשתמש בוחר תאריך
+
+            // בדיקה אם התאריך הוא בעבר (לא כולל היום)
+            const isPast = d.getTime() < today.getTime()
+
             marks[key] = {
-                disabled: false,
-                disableTouchEvent: false
+                disabled: isPast, // נבטל רק תאריכים בעבר
+                disableTouchEvent: isPast, // נמנע לחיצה על תאריכים בעבר
+                textColor: isPast ? '#d1d5db' : '#111827', // צבע טקסט אפור לתאריכים בעבר
+                selectedColor: '#3b82f6'
             }
         }
+
         if (selectedDate) {
             const k = typeof selectedDate === 'string' ? selectedDate : toDateKey(selectedDate)
             marks[k] = { ...(marks[k] || {}), selected: true, selectedColor: '#3b82f6' }
@@ -429,9 +440,20 @@ export default function CustomerAppointment() {
 
                 {!loading && step === STEP.DATE && (
                     <View style={{ paddingHorizontal: 16 }}>
-                        <Text style={styles.sectionTitle}>בחרו תאריך (עד חודש קדימה)</Text>
+                        <Text style={styles.sectionTitle}>בחרו תאריך (מהיום והלאה)</Text>
+                        <Text style={styles.helper}>ניתן לבחור תאריכים מהיום ועד חודש קדימה</Text>
                         <Calendar
                             onDayPress={(day) => {
+                                // בדיקה נוספת שהתאריך לא בעבר
+                                const selectedDate = new Date(day.dateString)
+                                const today = new Date()
+                                today.setHours(0, 0, 0, 0)
+
+                                if (selectedDate < today) {
+                                    Alert.alert('שגיאה', 'לא ניתן לבחור תאריך בעבר')
+                                    return
+                                }
+
                                 const d = new Date(day.dateString)
                                 onSelectDate(d)
                             }}
@@ -442,13 +464,20 @@ export default function CustomerAppointment() {
                                 textDayFontFamily: undefined,
                                 textMonthFontFamily: undefined,
                                 textDayHeaderFontFamily: undefined,
+                                'stylesheet.calendar.header': {
+                                    dayHeader: {
+                                        color: '#6b7280',
+                                        fontWeight: '600'
+                                    }
+                                }
                             }}
                             minDate={new Date().toISOString().split('T')[0]}
                             maxDate={(() => { const d = new Date(); d.setDate(d.getDate() + 29); return d.toISOString().split('T')[0] })()}
-                            disableAllTouchEventsForDisabledDays
+                            disableAllTouchEventsForDisabledDays={true}
                             markingType="custom"
                             firstDay={0}
                             hideExtraDays
+                            disableArrowLeft={false} // מאפשר חזרה לחודשים קודמים אבל לא לבחור תאריכים בעבר
                         />
                         <Text style={styles.helper}>לחץ על תאריך כדי לראות זמנים פנויים</Text>
                     </View>
@@ -663,8 +692,10 @@ const styles = StyleSheet.create({
     },
     helper: {
         textAlign: 'center',
-        color: '#b91c1c',
-        marginTop: 8
+        color: '#6b7280',
+        marginTop: 8,
+        marginBottom: 8,
+        fontSize: 14
     },
     summary: {
         padding: 16,

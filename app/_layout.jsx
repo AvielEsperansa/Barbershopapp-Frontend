@@ -47,7 +47,6 @@ export default function RootLayout() {
           <Stack.Screen name="myAppointments" options={{ headerShown: false }} />
           <Stack.Screen name="security" options={{ headerShown: false }} />
           <Stack.Screen name="help" options={{ headerShown: false }} />
-          <Stack.Screen name="barberProfile" options={{ headerShown: false }} />
           <Stack.Screen name="haircutHistory" options={{ headerShown: false }} />
         </Stack>
       </SafeScreen>

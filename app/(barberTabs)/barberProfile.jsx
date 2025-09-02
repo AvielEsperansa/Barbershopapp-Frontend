@@ -1,6 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import AsyncStorage from '@react-native-async-storage/async-storage'
+import { useFocusEffect } from '@react-navigation/native'
 import { router } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import React, { useCallback, useEffect, useState } from 'react'
 import {
     Alert,
     Image,
@@ -18,9 +20,68 @@ import SafeScreen from '../components/SafeScreen'
 export default function BarberProfile() {
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
+    const [isAuthenticated, setIsAuthenticated] = useState(false)
 
     useEffect(() => {
-        fetchMe()
+        checkAuthentication()
+    }, [checkAuthentication])
+
+    // בדיקת אבטחה כל פעם שהמסך מתמקד
+    useFocusEffect(
+        React.useCallback(() => {
+            checkAuthentication()
+        }, [])
+    )
+
+    const checkAuthentication = useCallback(async () => {
+        try {
+            setLoading(true)
+
+            // בודק אם המשתמש מחובר
+            const isLoggedIn = await tokenManager.isLoggedIn()
+
+            if (!isLoggedIn) {
+                console.log('❌ User not logged in, redirecting to login')
+                Alert.alert('שגיאה', 'התחברות נדרשת', [
+                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
+                ])
+                return
+            }
+
+            // בודק את התפקיד
+            const role = await AsyncStorage.getItem('role')
+            if (role !== 'barber') {
+                console.log('❌ User is not a barber, redirecting')
+                Alert.alert('שגיאה', 'גישה נדרשת למספר', [
+                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
+                ])
+                return
+            }
+
+            // בודק אם הטוקן תקף על ידי ניסיון לרענן אותו
+            const tokenValid = await tokenManager.refreshTokenIfNeeded()
+            if (!tokenValid) {
+                console.log('❌ Token refresh failed, redirecting to login')
+                Alert.alert('שגיאה', 'התחברות פגה, יש להתחבר מחדש', [
+                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
+                ])
+                return
+            }
+
+            setIsAuthenticated(true)
+            console.log('✅ Authentication check passed')
+
+            // אם מחובר, טוען את הפרופיל
+            await fetchMe()
+
+        } catch (error) {
+            console.error('❌ Authentication check failed:', error)
+            Alert.alert('שגיאה', 'בעיה בבדיקת התחברות', [
+                { text: 'אישור', onPress: () => router.replace('/(auth)/') }
+            ])
+        } finally {
+            setLoading(false)
+        }
     }, [])
 
     const fetchMe = async () => {
@@ -89,10 +150,15 @@ export default function BarberProfile() {
             <SafeScreen paddingTop={5}>
                 <View style={styles.loadingContainer}>
                     <MaterialCommunityIcons name="loading" size={48} color="#3b82f6" />
-                    <Text style={styles.loadingText}>טוען פרופיל...</Text>
+                    <Text style={styles.loadingText}>בודק התחברות...</Text>
                 </View>
             </SafeScreen>
         )
+    }
+
+    // אם לא מחובר, לא מציג את התוכן
+    if (!isAuthenticated) {
+        return null
     }
 
     if (!user) {
@@ -154,11 +220,6 @@ export default function BarberProfile() {
                         title="תספורות שבוצעו"
                         subtitle="צפה בהיסטוריית תספורות"
                         onPress={() => router.push("/haircutHistory")} />
-                    <Row
-                        icon="calendar-clock"
-                        title="לוח זמנים"
-                        subtitle="נהל זמינות"
-                        onPress={() => { }} />
                     <Row
                         icon="star"
                         title="דירוגים"

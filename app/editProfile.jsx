@@ -12,6 +12,14 @@ export default function EditProfile() {
     const [email, setEmail] = useState('')
     const [phone, setPhone] = useState('')
 
+    // שמירת הערכים המקוריים להשוואה
+    const [originalValues, setOriginalValues] = useState({
+        firstName: '',
+        lastName: '',
+        email: '',
+        phone: ''
+    })
+
     useEffect(() => {
         const loadProfile = async () => {
             setLoading(true)
@@ -27,6 +35,14 @@ export default function EditProfile() {
                 setLastName(u.lastName || '')
                 setEmail(u.email || '')
                 setPhone(u.phone || '')
+
+                // שמירת הערכים המקוריים להשוואה
+                setOriginalValues({
+                    firstName: u.firstName || '',
+                    lastName: u.lastName || '',
+                    email: u.email || '',
+                    phone: u.phone || ''
+                })
             } catch (e) {
                 setError(e instanceof Error ? e.message : 'Failed to load profile')
             } finally {
@@ -37,6 +53,18 @@ export default function EditProfile() {
     }, [])
 
     const onSave = async () => {
+        // בדיקה אם יש שינויים
+        const hasChanges =
+            firstName !== originalValues.firstName ||
+            lastName !== originalValues.lastName ||
+            email !== originalValues.email ||
+            phone !== originalValues.phone
+
+        if (!hasChanges) {
+            Alert.alert('מידע', 'לא בוצעו שינויים בפרטים')
+            return
+        }
+
         setLoading(true)
         setError('')
         try {
@@ -60,6 +88,13 @@ export default function EditProfile() {
             // בדיקה שהבקנד החזיר הודעה על הצלחה
             if (json.message === 'Profile updated successfully') {
                 Alert.alert('הצלחה', 'הפרטים עודכנו בהצלחה')
+                // עדכון הערכים המקוריים
+                setOriginalValues({
+                    firstName,
+                    lastName,
+                    email,
+                    phone
+                })
                 router.back()
             } else {
                 throw new Error('Unexpected response format')
@@ -69,6 +104,14 @@ export default function EditProfile() {
         } finally {
             setLoading(false)
         }
+    }
+
+    // פונקציה לבדיקה אם יש שינויים
+    const hasUnsavedChanges = () => {
+        return firstName !== originalValues.firstName ||
+            lastName !== originalValues.lastName ||
+            email !== originalValues.email ||
+            phone !== originalValues.phone
     }
 
     return (
@@ -93,8 +136,17 @@ export default function EditProfile() {
                 <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="050-1234567" keyboardType="phone-pad" textAlign="right" />
             </View>
 
-            <Pressable disabled={loading} onPress={onSave} style={[styles.saveButton, loading && { opacity: 0.7 }]}>
-                <Text style={styles.saveButtonText}>שמירה</Text>
+            <Pressable
+                disabled={loading || !hasUnsavedChanges()}
+                onPress={onSave}
+                style={[
+                    styles.saveButton,
+                    (loading || !hasUnsavedChanges()) && { opacity: 0.5 }
+                ]}
+            >
+                <Text style={styles.saveButtonText}>
+                    {hasUnsavedChanges() ? 'שמירה' : 'אין שינויים'}
+                </Text>
             </Pressable>
             <Pressable disabled={loading} onPress={() => router.back()} style={styles.cancelButton}>
                 <Text style={styles.cancelButtonText}>ביטול</Text>

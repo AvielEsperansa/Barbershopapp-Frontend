@@ -1,4 +1,4 @@
 const config = {
-    BASE_URL: 'http://10.0.0.10:4000'
+    BASE_URL: 'http://172.20.10.3:4000'
 }
 export default config;

@@ -15,7 +15,7 @@ export default function MyAppointments() {
         setLoading(true)
         setError('')
         try {
-            const res = await apiClient.get(`${config.BASE_URL}/users/appointments/past`)
+            const res = await apiClient.get(`${config.BASE_URL}/appointments/`)
             const json = await res.json()
             if (!res.ok) throw new Error(json?.error || 'Failed to load appointments')
             const list = json.appointments || json.data || (Array.isArray(json) ? json : [])
@@ -34,8 +34,8 @@ export default function MyAppointments() {
             const upcoming = (Array.isArray(list) ? list : [])
                 .filter((a) => !isCanceled(a))
                 .map((a) => ({ a, dayKey: toDayKey(a) }))
-                .filter(({ dayKey }) => !!dayKey && dayKey >= todayKey)
-                .sort((x, y) => (x.dayKey < y.dayKey ? -1 : x.dayKey > y.dayKey ? 1 : 0))
+                .filter(({ dayKey }) => !!dayKey && dayKey >= todayKey) // תורים עתידיים
+                .sort((x, y) => (x.dayKey < y.dayKey ? -1 : x.dayKey > y.dayKey ? 1 : 0)) // מיון עולה (הכי קרוב קודם)
                 .map(({ a }) => a)
             setAppointments(upcoming)
         } catch (e) {
@@ -113,8 +113,14 @@ export default function MyAppointments() {
                     <View key={appt._id || appt.id} style={styles.card}>
                         <Row label="תאריך:" value={(() => { const d = new Date(appt.date || appt.startDate || appt.startTime); return isNaN(d) ? '-' : d.toLocaleDateString('he-IL') })()} />
                         <Row label="שעה:" value={appt.startTime || (appt.time && appt.time.start) || '-'} />
+                        {!!appt.endTime && (
+                            <Row label="סיום:" value={appt.endTime} />
+                        )}
                         {!!(appt.service?.name || appt.serviceName) && (
                             <Row label="טיפול:" value={appt.service?.name || appt.serviceName} />
+                        )}
+                        {!!appt.service?.durationMinutes && (
+                            <Row label="משך:" value={`${appt.service.durationMinutes} דקות`} />
                         )}
                         {!!(appt.barber?.firstName || appt.barberName) && (
                             <Row label="ספר:" value={appt.barber?.firstName ? `${appt.barber.firstName} ${appt.barber.lastName || ''}`.trim() : appt.barberName} />
