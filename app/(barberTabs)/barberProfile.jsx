@@ -1,11 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import AsyncStorage from '@react-native-async-storage/async-storage'
-import { useFocusEffect } from '@react-navigation/native'
 import { router } from 'expo-router'
-import React, { useCallback, useEffect, useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
     Alert,
-    Image,
     Pressable,
     ScrollView,
     StyleSheet,
@@ -15,74 +12,23 @@ import {
 import config from '../../config'
 import apiClient from '../../lib/apiClient'
 import tokenManager from '../../lib/tokenManager'
+import ImageUploader from '../components/ImageUploader'
 import SafeScreen from '../components/SafeScreen'
 
 export default function BarberProfile() {
     const [user, setUser] = useState(null)
     const [loading, setLoading] = useState(true)
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
 
     useEffect(() => {
-        checkAuthentication()
-    }, [checkAuthentication])
-
-    // בדיקת אבטחה כל פעם שהמסך מתמקד
-    useFocusEffect(
-        React.useCallback(() => {
-            checkAuthentication()
-        }, [])
-    )
-
-    const checkAuthentication = useCallback(async () => {
-        try {
-            setLoading(true)
-
-            // בודק אם המשתמש מחובר
-            const isLoggedIn = await tokenManager.isLoggedIn()
-
-            if (!isLoggedIn) {
-                console.log('❌ User not logged in, redirecting to login')
-                Alert.alert('שגיאה', 'התחברות נדרשת', [
-                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-                ])
-                return
-            }
-
-            // בודק את התפקיד
-            const role = await AsyncStorage.getItem('role')
-            if (role !== 'barber') {
-                console.log('❌ User is not a barber, redirecting')
-                Alert.alert('שגיאה', 'גישה נדרשת למספר', [
-                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-                ])
-                return
-            }
-
-            // בודק אם הטוקן תקף על ידי ניסיון לרענן אותו
-            const tokenValid = await tokenManager.refreshTokenIfNeeded()
-            if (!tokenValid) {
-                console.log('❌ Token refresh failed, redirecting to login')
-                Alert.alert('שגיאה', 'התחברות פגה, יש להתחבר מחדש', [
-                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-                ])
-                return
-            }
-
-            setIsAuthenticated(true)
-            console.log('✅ Authentication check passed')
-
-            // אם מחובר, טוען את הפרופיל
-            await fetchMe()
-
-        } catch (error) {
-            console.error('❌ Authentication check failed:', error)
-            Alert.alert('שגיאה', 'בעיה בבדיקת התחברות', [
-                { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-            ])
-        } finally {
-            setLoading(false)
-        }
+        fetchMe()
     }, [])
+
+    const handleImageUploaded = (newImageUrl) => {
+        setUser(prevUser => ({
+            ...prevUser,
+            profileImage: newImageUrl
+        }));
+    };
 
     const fetchMe = async () => {
         try {
@@ -94,6 +40,7 @@ export default function BarberProfile() {
             if (response.ok) {
                 const data = await response.json()
                 console.log('✅ Profile data received:', data)
+                console.log('🖼️ Profile image URL:', data.user?.profileImage)
                 // הבקנד מחזיר { user: {...} }
                 setUser(data.user)
             } else {
@@ -122,7 +69,7 @@ export default function BarberProfile() {
         }
     }
 
-    const onLogout = async () => {
+    const onLogout = () => {
         Alert.alert(
             'התנתקות',
             'האם אתה בטוח שברצונך להתנתק?',
@@ -137,7 +84,7 @@ export default function BarberProfile() {
                             router.replace('/(auth)')
                         } catch (error) {
                             console.error('Logout error:', error)
-                            Alert.alert('שגיאה', 'לא ניתן להתנתק כרגע')
+                            router.replace('/(auth)')
                         }
                     }
                 }
@@ -147,23 +94,18 @@ export default function BarberProfile() {
 
     if (loading) {
         return (
-            <SafeScreen paddingTop={5}>
+            <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
                 <View style={styles.loadingContainer}>
-                    <MaterialCommunityIcons name="loading" size={48} color="#3b82f6" />
-                    <Text style={styles.loadingText}>בודק התחברות...</Text>
+                    <MaterialCommunityIcons name="refresh" size={48} color="#3b82f6" />
+                    <Text style={styles.loadingText}>טוען פרטי משתמש...</Text>
                 </View>
             </SafeScreen>
         )
     }
 
-    // אם לא מחובר, לא מציג את התוכן
-    if (!isAuthenticated) {
-        return null
-    }
-
     if (!user) {
         return (
-            <SafeScreen paddingTop={5}>
+            <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
                 <View style={styles.errorContainer}>
                     <MaterialCommunityIcons name="alert-circle" size={48} color="#ef4444" />
                     <Text style={styles.errorText}>לא ניתן לטעון את הפרופיל</Text>
@@ -180,22 +122,21 @@ export default function BarberProfile() {
     }
 
     return (
-        <SafeScreen paddingTop={5}>
+        <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
             <ScrollView
                 style={styles.container}
                 contentContainerStyle={styles.content}
             >
                 {/* Header */}
                 <View style={styles.header}>
-                    <View style={styles.avatarWrap}>
-                        {user.avatar ? (
-                            <Image source={{ uri: user.avatar }} style={styles.avatar} />
-                        ) : (
-                            <View style={styles.avatarFallback}>
-                                <MaterialCommunityIcons name="account" size={48} color="#9ca3af" />
-                            </View>
-                        )}
-                    </View>
+                    <ImageUploader
+                        currentImage={user?.profileImage}
+                        onImageUploaded={handleImageUploaded}
+                        size={96}
+                        showOverlay={true}
+                        uploadEndpoint="/users/upload-profile-image"
+                        placeholderText="הוסף תמונת פרופיל"
+                    />
                     <Text style={styles.name}>{user.firstName || 'שם לא זמין'}</Text>
                     <Text style={styles.email}>{user.email || 'אימייל לא זמין'}</Text>
                     <Text style={styles.role}>ברבר מקצועי</Text>
@@ -337,25 +278,6 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         borderWidth: 1,
         borderColor: '#e5e7eb'
-    },
-    avatarWrap: {
-        width: 96,
-        height: 96,
-        borderRadius: 999,
-        overflow: 'hidden',
-        borderWidth: 2,
-        borderColor: '#e5e7eb',
-        backgroundColor: '#f3f4f6',
-        marginBottom: 4
-    },
-    avatar: {
-        width: '100%',
-        height: '100%'
-    },
-    avatarFallback: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center'
     },
     name: {
         fontSize: 20,

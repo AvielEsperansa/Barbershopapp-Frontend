@@ -5,13 +5,13 @@ import SafeScreen from '../components/SafeScreen'
 
 export default function AuthLayout() {
     return (
-        <SafeAreaProvider>
-            <SafeScreen>
+        <SafeScreen backgroundColor="#1a1a1a">
+            <SafeAreaProvider>
                 <Stack screenOptions={{ headerShown: false }}>
                     <Stack.Screen name="index" options={{ headerShown: false }} />
                     <Stack.Screen name="signup" options={{ headerShown: false }} />
                 </Stack>
-            </SafeScreen>
-        </SafeAreaProvider>
+            </SafeAreaProvider>
+        </SafeScreen>
     )
 }

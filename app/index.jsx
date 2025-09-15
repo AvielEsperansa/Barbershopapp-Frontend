@@ -1,85 +1,67 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useFocusEffect } from '@react-navigation/native';
 import { router } from "expo-router";
 import React, { useEffect, useState } from "react";
 import {
-  ActivityIndicator,
   Dimensions,
   Pressable,
-  StatusBar,
   StyleSheet,
   Text,
   View
 } from "react-native";
 import tokenManager from '../lib/tokenManager';
+import SafeScreen from './components/SafeScreen';
 
 const { width } = Dimensions.get('window');
 
 export default function Index() {
-  const [loading, setLoading] = useState(true);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     const checkAuthStatus = async () => {
       try {
-        // בודק אם המשתמש מחובר
-        const loggedIn = await tokenManager.isLoggedIn();
+        console.log('🔍 Starting auth check...');
+
+        // בודק אם המשתמש מחובר (כולל בדיקת תקפות הטוקן) עם timeout
+        const authPromise = tokenManager.isLoggedInSilent();
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Auth check timeout')), 5000) // 5 שניות timeout
+        );
+
+        const loggedIn = await Promise.race([authPromise, timeoutPromise]);
+        console.log('🔍 Auth check result:', loggedIn);
+
         setIsLoggedIn(loggedIn);
 
         if (loggedIn) {
           // אם המשתמש מחובר, בודק את התפקיד שלו
           const role = await AsyncStorage.getItem('role');
+          console.log('🔍 User role:', role);
 
           // מעביר אותו לטאב המתאים
           if (role === 'barber') {
+            console.log('🚀 Redirecting to barber dashboard...');
             router.replace('/(barberTabs)/Dashboard');
           } else {
+            console.log('🚀 Redirecting to customer tabs...');
             router.replace('/(customerTabs)');
           }
+        } else {
+          console.log('❌ User not logged in, staying on landing page');
+          // לא מעביר לדף התחברות - נותן למשתמש לבחור
         }
       } catch (error) {
-        console.log('Error checking auth status:', error);
-      } finally {
-        setLoading(false);
+        console.error('❌ Error checking auth status:', error.message);
+        // אם זה timeout, זה לא באג - זה התנהגות תקינה
+        if (error.message === 'Auth check timeout') {
+          console.log('⏰ Auth check timed out - user needs to log in');
+        }
+        setIsLoggedIn(false);
+        // לא מעביר לדף התחברות - נותן למשתמש לבחור
       }
     };
 
     checkAuthStatus();
   }, []);
-
-  // בודק את מצב ההתחברות כל פעם שהמשתמש חוזר לעמוד
-  useFocusEffect(
-    React.useCallback(() => {
-      const checkAuthOnFocus = async () => {
-        try {
-          const loggedIn = await tokenManager.isLoggedIn();
-          if (loggedIn) {
-            const role = await AsyncStorage.getItem('role');
-            if (role === 'barber') {
-              router.replace('/(barberTabs)/Dashboard');
-            } else {
-              router.replace('/(customerTabs)');
-            }
-          }
-        } catch (error) {
-          console.log('Error checking auth on focus:', error);
-        }
-      };
-
-      checkAuthOnFocus();
-    }, [])
-  );
-
-  // מציג loading בזמן בדיקת התחברות
-  if (loading) {
-    return (
-      <View style={[styles.container, styles.loadingContainer]}>
-        <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
-        <ActivityIndicator size="large" color="#d4af37" />
-        <Text style={styles.loadingText}>בודק התחברות...</Text>
-      </View>
-    );
-  }
 
   // אם המשתמש מחובר, לא מציג את עמוד הנחיתה
   if (isLoggedIn) {
@@ -87,84 +69,85 @@ export default function Index() {
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#1a1a1a" />
+    <SafeScreen>
+      <View style={styles.container}>
 
-      {/* Header Section */}
-      <View style={styles.header}>
-        <View style={styles.logoContainer}>
-          <Text style={styles.logoText}>Oshri</Text>
-          <Text style={styles.logoSubtext}>Barber</Text>
-        </View>
-        <Text style={styles.tagline}>המספרה המקצועית שלכם</Text>
-      </View>
-
-      {/* Hero Section */}
-      <View style={styles.hero}>
-        <View style={styles.heroContent}>
-          <Text style={styles.heroTitle}>ברוכים הבאים</Text>
-          <Text style={styles.heroSubtitle}>
-            לקבלת השירות הטוב ביותר במספרה מקצועית
-          </Text>
-          <Text style={styles.heroDescription}>
-            צוות מקצועי, ציוד מתקדם ושירות ברמה הגבוהה ביותר
-          </Text>
-        </View>
-
-        {/* Decorative Elements */}
-        <View style={styles.decorativeElements}>
-          <View style={[styles.circle, styles.circle1]} />
-          <View style={[styles.circle, styles.circle2]} />
-          <View style={[styles.circle, styles.circle3]} />
-        </View>
-      </View>
-
-      {/* Features Section */}
-      <View style={styles.features}>
-        <View style={styles.featureItem}>
-          <View style={styles.featureIcon}>
-            <Text style={styles.featureEmoji}>✂️</Text>
+        {/* Header Section */}
+        <View style={styles.header}>
+          <View style={styles.logoContainer}>
+            <Text style={styles.logoText}>Oshri</Text>
+            <Text style={styles.logoSubtext}>Barber</Text>
           </View>
-          <Text style={styles.featureText}>גזירה מקצועית</Text>
+          <Text style={styles.tagline}>המספרה המקצועית שלכם</Text>
         </View>
 
-        <View style={styles.featureItem}>
-          <View style={styles.featureIcon}>
-            <Text style={styles.featureEmoji}>💈</Text>
+        {/* Hero Section */}
+        <View style={styles.hero}>
+          <View style={styles.heroContent}>
+            <Text style={styles.heroTitle}>ברוכים הבאים</Text>
+            <Text style={styles.heroSubtitle}>
+              לקבלת השירות הטוב ביותר במספרה מקצועית
+            </Text>
+            <Text style={styles.heroDescription}>
+              צוות מקצועי, ציוד מתקדם ושירות ברמה הגבוהה ביותר
+            </Text>
           </View>
-          <Text style={styles.featureText}>תספורת מודרנית</Text>
-        </View>
 
-        <View style={styles.featureItem}>
-          <View style={styles.featureIcon}>
-            <Text style={styles.featureEmoji}>⭐</Text>
+          {/* Decorative Elements */}
+          <View style={styles.decorativeElements}>
+            <View style={[styles.circle, styles.circle1]} />
+            <View style={[styles.circle, styles.circle2]} />
+            <View style={[styles.circle, styles.circle3]} />
           </View>
-          <Text style={styles.featureText}>שירות מעולה</Text>
+        </View>
+
+        {/* Features Section */}
+        <View style={styles.features}>
+          <View style={styles.featureItem}>
+            <View style={styles.featureIcon}>
+              <Text style={styles.featureEmoji}>✂️</Text>
+            </View>
+            <Text style={styles.featureText}>גזירה מקצועית</Text>
+          </View>
+
+          <View style={styles.featureItem}>
+            <View style={styles.featureIcon}>
+              <Text style={styles.featureEmoji}>💈</Text>
+            </View>
+            <Text style={styles.featureText}>תספורת מודרנית</Text>
+          </View>
+
+          <View style={styles.featureItem}>
+            <View style={styles.featureIcon}>
+              <Text style={styles.featureEmoji}>⭐</Text>
+            </View>
+            <Text style={styles.featureText}>שירות מעולה</Text>
+          </View>
+        </View>
+
+        {/* Action Buttons */}
+        <View style={styles.actions}>
+          <Pressable
+            style={styles.primaryButton}
+            onPress={() => router.replace('/(auth)/')}
+          >
+            <Text style={styles.primaryButtonText}>התחברו</Text>
+          </Pressable>
+
+          <Pressable
+            style={styles.secondaryButton}
+            onPress={() => router.replace('/(auth)/signup')}
+          >
+            <Text style={styles.secondaryButtonText}>הירשמו</Text>
+          </Pressable>
+        </View>
+
+        {/* Footer */}
+        <View style={styles.footer}>
+          <Text style={styles.footerText}>© 2024 Oshri Barber. כל הזכויות שמורות</Text>
         </View>
       </View>
-
-      {/* Action Buttons */}
-      <View style={styles.actions}>
-        <Pressable
-          style={styles.primaryButton}
-          onPress={() => router.replace('/(auth)/')}
-        >
-          <Text style={styles.primaryButtonText}>התחברו</Text>
-        </Pressable>
-
-        <Pressable
-          style={styles.secondaryButton}
-          onPress={() => router.replace('/(auth)/signup')}
-        >
-          <Text style={styles.secondaryButtonText}>הירשמו</Text>
-        </Pressable>
-      </View>
-
-      {/* Footer */}
-      <View style={styles.footer}>
-        <Text style={styles.footerText}>© 2024 Oshri Barber. כל הזכויות שמורות</Text>
-      </View>
-    </View>
+    </SafeScreen>
   );
 }
 
@@ -174,14 +157,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#1a1a1a',
   },
   header: {
-    paddingTop: StatusBar.currentHeight + 20 || 50,
+    paddingTop: 10,
     paddingHorizontal: 24,
-    paddingBottom: 20,
+    paddingBottom: 15,
     alignItems: 'center',
   },
   logoContainer: {
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   logoText: {
     fontSize: 36,
@@ -194,7 +177,7 @@ const styles = StyleSheet.create({
     fontWeight: '300',
     color: '#ffffff',
     letterSpacing: 4,
-    marginTop: -5,
+    marginTop: -8,
   },
   tagline: {
     fontSize: 16,
@@ -343,15 +326,5 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#888888',
     textAlign: 'center',
-  },
-  loadingContainer: {
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  loadingText: {
-    color: '#d4af37',
-    fontSize: 18,
-    marginTop: 20,
-    fontWeight: '500',
   },
 });

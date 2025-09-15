@@ -5,6 +5,7 @@ import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, Text
 import { Calendar } from 'react-native-calendars'
 import config from '../../config'
 import apiClient from '../../lib/apiClient'
+import notificationManager from '../../lib/notificationManager'
 
 const STEP = {
     BARBER: 0,
@@ -116,34 +117,34 @@ export default function CustomerAppointment() {
 
     const loadMyAppointments = async () => {
         try {
-            const url = `${config.BASE_URL}/appointments/my-appointments`
-            const res = await apiClient.get(url)
-            const json = await res.json()
-            if (!res.ok) {
+            const response = await apiClient.get(`${config.BASE_URL}/appointments/`)
+            const data = await response.json()
+
+            if (!response.ok) {
                 setMyAppointments([])
                 return
             }
-            const list = json.appointments || json.data || (Array.isArray(json) ? json : [])
-            const todayKey = new Date().toISOString().split('T')[0]
-            const isCanceled = (a) => {
-                const st = (a.status || a.state || '').toString().toLowerCase()
-                return st === 'canceled' || st === 'cancelled' || a.isCanceled || a.isCancelled || !!a.canceledAt || !!a.cancelledAt
-            }
-            const toDayKey = (a) => {
-                const dateStr = a.date || a.startDate || a.start
-                if (!dateStr) return null
-                const d = new Date(dateStr)
-                if (Number.isNaN(d.getTime())) return null
-                return d.toISOString().split('T')[0]
-            }
-            const upcomingActive = (Array.isArray(list) ? list : [])
-                .filter((a) => !isCanceled(a))
-                .map((a) => ({ a, dayKey: toDayKey(a) }))
-                .filter(({ dayKey }) => !!dayKey && dayKey >= todayKey)
-                .sort((x, y) => (x.dayKey < y.dayKey ? -1 : x.dayKey > y.dayKey ? 1 : 0))
-                .map(({ a }) => a)
-            setMyAppointments(upcomingActive)
-        } catch (_e) {
+
+            // קבלת רשימת התורים
+            const allAppointments = data.appointments || []
+
+            // סינון תורים עתידיים בלבד
+            const today = new Date()
+            today.setHours(0, 0, 0, 0) // התחלת היום
+
+            // הוספת תאריך מפורש לכל תור וסינון תורים עתידיים
+            const appointmentsWithDate = allAppointments.map(appointment => ({
+                ...appointment,
+                appointmentDate: new Date(appointment.date || appointment.startDate || appointment.startTime)
+            })).filter(appointment => appointment.appointmentDate >= today)
+
+            // מיון לפי תאריך (הכי קרוב קודם)
+            appointmentsWithDate.sort((a, b) => a.appointmentDate - b.appointmentDate)
+
+            setMyAppointments(appointmentsWithDate)
+
+        } catch (error) {
+            console.error('Error loading appointments:', error)
             setMyAppointments([])
         }
     }
@@ -211,8 +212,6 @@ export default function CustomerAppointment() {
 
             setStep(STEP.TIME)
         } catch (e) {
-            console.error('Error loading slots:', e)
-            setError(e instanceof Error ? e.message : 'Failed to load available slots')
             Alert.alert('שגיאה', e instanceof Error ? e.message : 'נכשל לטעון זמנים פנויים')
         } finally {
             setLoading(false)
@@ -271,6 +270,31 @@ export default function CustomerAppointment() {
             }
             Alert.alert('נקבע תור בהצלחה')
             console.log("----------------------------------------- appointment created", json);
+
+            // שליחת הודעות אוטומטיות
+            try {
+                // הודעת אישור מיידית
+                await notificationManager.sendAppointmentConfirmation({
+                    id: json.appointment?._id || json._id,
+                    barberName: `${selectedBarber.firstName} ${selectedBarber.lastName}`,
+                    serviceName: selectedService.name,
+                    date: selectedDate,
+                    startTime: selectedSlot.startTime
+                });
+
+                // תזכורת 24 שעות לפני התור
+                await notificationManager.scheduleAppointmentReminder({
+                    id: json.appointment?._id || json._id,
+                    barberName: `${selectedBarber.firstName} ${selectedBarber.lastName}`,
+                    serviceName: selectedService.name,
+                    date: selectedDate,
+                    startTime: selectedSlot.startTime
+                });
+            } catch (notificationError) {
+                console.log('Failed to send notifications:', notificationError);
+                // לא מפריעים למשתמש אם ההודעות נכשלו
+            }
+
             await loadMyAppointments()
 
             // עדכון אופטימי של הזמנים הפנויים
@@ -319,13 +343,27 @@ export default function CustomerAppointment() {
                     text: 'כן', style: 'destructive', onPress: async () => {
                         try {
                             setLoading(true)
-                            const url = `${config.BASE_URL}/appointments/cancel/${apptId}`
+                            const url = `${config.BASE_URL}/appointments/${apptId}`
                             const res = await apiClient.delete(url)
                             const json = await res.json().catch(() => ({}))
                             if (!res.ok) {
                                 Alert.alert('שגיאה', json?.error || 'נכשל לבטל את התור')
                             } else {
                                 Alert.alert('התור בוטל')
+
+                                // שליחת הודעת ביטול
+                                try {
+                                    await notificationManager.sendAppointmentCancellation({
+                                        id: apptId,
+                                        barberName: appt.barber?.firstName ? `${appt.barber.firstName} ${appt.barber.lastName || ''}`.trim() : appt.barberName,
+                                        serviceName: appt.service?.name || appt.serviceName,
+                                        date: appt.date || appt.startDate,
+                                        startTime: appt.startTime
+                                    });
+                                } catch (notificationError) {
+                                    console.log('Failed to send cancellation notification:', notificationError);
+                                }
+
                                 // Optimistic UI: remove from list
                                 setMyAppointments((prev) => (prev || []).filter((x) => (x._id || x.id) !== apptId))
                                 await loadMyAppointments()

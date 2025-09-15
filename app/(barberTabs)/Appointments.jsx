@@ -1,5 +1,4 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import DateTimePicker from '@react-native-community/datetimepicker'
 import { useFocusEffect } from '@react-navigation/native'
 import { router } from 'expo-router'
@@ -16,12 +15,9 @@ import {
 } from 'react-native'
 import config from '../../config'
 import apiClient from '../../lib/apiClient'
-import tokenManager from '../../lib/tokenManager'
 import SafeScreen from '../components/SafeScreen'
 
 export default function Appointments() {
-    const [loading, setLoading] = useState(true)
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
     const [activeTab, setActiveTab] = useState('appointments')
     const [barberId, setBarberId] = useState('')
 
@@ -37,18 +33,6 @@ export default function Appointments() {
     const [showTimePicker, setShowTimePicker] = useState(false)
     const [timePickerType, setTimePickerType] = useState('') // 'start' or 'end'
     const [timePickerDay, setTimePickerDay] = useState(0)
-
-    // בדיקת אבטחה בטעינת הקומפוננט
-    useEffect(() => {
-        checkAuthentication()
-    }, [])
-
-    // בדיקת אבטחה כל פעם שהמסך מתמקד
-    useFocusEffect(
-        React.useCallback(() => {
-            checkAuthentication()
-        }, [])
-    )
 
     useEffect(() => {
         if (barberId) {
@@ -66,60 +50,21 @@ export default function Appointments() {
         }, [barberId, loadWorkingHours, loadDayOffs])
     )
 
-    const checkAuthentication = async () => {
-        try {
-            setLoading(true)
-
-            // בודק אם המשתמש מחובר
-            const isLoggedIn = await tokenManager.isLoggedIn()
-
-            if (!isLoggedIn) {
-                console.log('❌ User not logged in, redirecting to login')
-                Alert.alert('שגיאה', 'התחברות נדרשת', [
-                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-                ])
-                return
+    // טוען את הפרופיל של הספר בהתחלה
+    useEffect(() => {
+        const loadProfile = async () => {
+            try {
+                const response = await apiClient.get(`${config.BASE_URL}/users/profile`)
+                if (response.ok) {
+                    const data = await response.json()
+                    setBarberId(data.user._id)
+                }
+            } catch (error) {
+                console.error('Error loading profile:', error)
             }
-
-            // בודק את התפקיד
-            const role = await AsyncStorage.getItem('role')
-            if (role !== 'barber') {
-                console.log('❌ User is not a barber, redirecting')
-                Alert.alert('שגיאה', 'גישה נדרשת למספר', [
-                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-                ])
-                return
-            }
-
-            // בודק אם הטוקן תקף על ידי ניסיון לרענן אותו
-            const tokenValid = await tokenManager.refreshTokenIfNeeded()
-            if (!tokenValid) {
-                console.log('❌ Token refresh failed, redirecting to login')
-                Alert.alert('שגיאה', 'התחברות פגה, יש להתחבר מחדש', [
-                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-                ])
-                return
-            }
-
-            // טוען את הפרופיל של הספר
-            const response = await apiClient.get(`${config.BASE_URL}/users/profile`)
-            if (response.ok) {
-                const data = await response.json()
-                setBarberId(data.user._id)
-            }
-
-            setIsAuthenticated(true)
-            console.log('✅ Authentication check passed')
-
-        } catch (error) {
-            console.error('❌ Authentication check failed:', error)
-            Alert.alert('שגיאה', 'בעיה בבדיקת התחברות', [
-                { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-            ])
-        } finally {
-            setLoading(false)
         }
-    }
+        loadProfile()
+    }, [])
 
     const loadWorkingHours = useCallback(async () => {
         try {
@@ -181,7 +126,7 @@ export default function Appointments() {
     const saveWorkingHours = async () => {
         try {
             const workingHoursArray = Object.values(workingHours)
-            const response = await apiClient.put(`${config.BASE_URL}/barbers/${barberId}/working-hours`, {
+            const response = await apiClient.post(`${config.BASE_URL}/working-hours/barber/${barberId}`, {
                 workingHours: workingHoursArray
             })
 
@@ -267,25 +212,8 @@ export default function Appointments() {
         return date
     }
 
-    // מציג loading בזמן בדיקת אבטחה
-    if (loading) {
-        return (
-            <SafeScreen paddingTop={5}>
-                <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#3b82f6" />
-                    <Text style={styles.loadingText}>בודק התחברות...</Text>
-                </View>
-            </SafeScreen>
-        )
-    }
-
-    // אם לא מחובר, לא מציג את התוכן
-    if (!isAuthenticated) {
-        return null
-    }
-
     return (
-        <SafeScreen paddingTop={5}>
+        <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
             <View style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>

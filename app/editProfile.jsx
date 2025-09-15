@@ -3,6 +3,7 @@ import { router } from 'expo-router'
 import React, { useEffect, useState } from 'react'
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import config from '../config'
+import SafeScreen from './components/SafeScreen'
 
 export default function EditProfile() {
     const [loading, setLoading] = useState(false)
@@ -115,43 +116,45 @@ export default function EditProfile() {
     }
 
     return (
-        <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 24 }]}>
-            <Text style={styles.title}>עריכת פרטים</Text>
-            {!!error && <Text style={styles.error}>{error}</Text>}
+        <SafeScreen backgroundColor="white" paddingTop={-20}>
+            <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 24 }]}>
+                <Text style={styles.title}>עריכת פרטים</Text>
+                {!!error && <Text style={styles.error}>{error}</Text>}
 
-            <View style={styles.field}>
-                <Text style={styles.label}>שם פרטי</Text>
-                <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="ישראל" textAlign="right" />
-            </View>
-            <View style={styles.field}>
-                <Text style={styles.label}>שם משפחה</Text>
-                <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="ישראלי" textAlign="right" />
-            </View>
-            <View style={styles.field}>
-                <Text style={styles.label}>אימייל</Text>
-                <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" textAlign="right" />
-            </View>
-            <View style={styles.field}>
-                <Text style={styles.label}>טלפון</Text>
-                <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="050-1234567" keyboardType="phone-pad" textAlign="right" />
-            </View>
+                <View style={styles.field}>
+                    <Text style={styles.label}>שם פרטי</Text>
+                    <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="ישראל" textAlign="right" />
+                </View>
+                <View style={styles.field}>
+                    <Text style={styles.label}>שם משפחה</Text>
+                    <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="ישראלי" textAlign="right" />
+                </View>
+                <View style={styles.field}>
+                    <Text style={styles.label}>אימייל</Text>
+                    <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" textAlign="right" />
+                </View>
+                <View style={styles.field}>
+                    <Text style={styles.label}>טלפון</Text>
+                    <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="050-1234567" keyboardType="phone-pad" textAlign="right" />
+                </View>
 
-            <Pressable
-                disabled={loading || !hasUnsavedChanges()}
-                onPress={onSave}
-                style={[
-                    styles.saveButton,
-                    (loading || !hasUnsavedChanges()) && { opacity: 0.5 }
-                ]}
-            >
-                <Text style={styles.saveButtonText}>
-                    {hasUnsavedChanges() ? 'שמירה' : 'אין שינויים'}
-                </Text>
-            </Pressable>
-            <Pressable disabled={loading} onPress={() => router.back()} style={styles.cancelButton}>
-                <Text style={styles.cancelButtonText}>ביטול</Text>
-            </Pressable>
-        </ScrollView>
+                <Pressable
+                    disabled={loading || !hasUnsavedChanges()}
+                    onPress={onSave}
+                    style={[
+                        styles.saveButton,
+                        (loading || !hasUnsavedChanges()) && { opacity: 0.5 }
+                    ]}
+                >
+                    <Text style={styles.saveButtonText}>
+                        {hasUnsavedChanges() ? 'שמירה' : 'אין שינויים'}
+                    </Text>
+                </Pressable>
+                <Pressable disabled={loading} onPress={() => router.back()} style={styles.cancelButton}>
+                    <Text style={styles.cancelButtonText}>ביטול</Text>
+                </Pressable>
+            </ScrollView>
+        </SafeScreen>
     )
 }
 
@@ -159,7 +162,7 @@ const styles = StyleSheet.create({
     container: {
         padding: 16,
         gap: 14,
-        backgroundColor: '#f8fafc'
+        backgroundColor: 'white'
     },
     title: {
         fontSize: 20,

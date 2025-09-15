@@ -1,10 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { router, useFocusEffect } from 'expo-router'
 import React, { useState } from 'react'
-import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
+import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import config from '../../config'
 import apiClient from '../../lib/apiClient'
 import tokenManager from '../../lib/tokenManager'
+import ImageUploader from '../components/ImageUploader'
 
 export default function CustomerProfile() {
     const [loading, setLoading] = useState(false)
@@ -20,6 +21,7 @@ export default function CustomerProfile() {
                     const json = await res.json()
                     if (!res.ok)
                         throw new Error(json?.error || 'Failed to load user profile')
+                    console.log('📱 User profile data:', json.user) // לוג לבדיקה
                     setUser(json.user) // הנתונים נמצאים בתוך json.user
                 }
                 finally {
@@ -35,18 +37,37 @@ export default function CustomerProfile() {
         if (user.firstName || user.lastName) return `${user.firstName || ''} ${user.lastName || ''}`.trim()
     }
 
-    const avatarSource = () => {
-        if (user?.avatarUrl) return { uri: user.avatarUrl }
-        if (user?.photo?.url) return { uri: user.photo.url }
-        return null
-    }
+    const handleImageUploaded = (newImageUrl) => {
+        setUser(prevUser => ({
+            ...prevUser,
+            profileImage: newImageUrl
+        }));
+    };
 
-    const onLogout = async () => {
-        try {
-            // מנקה את כל הטוקנים ועוצר את הרענון האוטומטי
-            await tokenManager.clearTokens()
-        } catch { }
-        router.replace('/(auth)')
+
+    const onLogout = () => {
+        Alert.alert(
+            'התנתקות',
+            'האם אתה בטוח שברצונך להתנתק?',
+            [
+                { text: 'ביטול', style: 'cancel' },
+                {
+                    text: 'התנתק',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            // מנקה את כל הטוקנים ועוצר את הרענון האוטומטי
+                            await tokenManager.clearTokens()
+                            // מעביר לדף ההתחברות
+                            router.replace('/(auth)')
+                        } catch {
+                            // גם אם יש שגיאה, מעביר לדף ההתחברות
+                            router.replace('/(auth)')
+                        }
+                    }
+                }
+            ]
+        )
     }
 
     const Row = ({ icon, title, subtitle, onPress, danger }) => (
@@ -85,15 +106,14 @@ export default function CustomerProfile() {
     return (
         <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.header}>
-                <View style={styles.avatarWrap}>
-                    {avatarSource() ? (
-                        <Image source={avatarSource()} style={styles.avatar} />
-                    ) : (
-                        <View style={styles.avatarFallback}>
-                            <MaterialCommunityIcons name="account" size={48} color="#e5e7eb" />
-                        </View>
-                    )}
-                </View>
+                <ImageUploader
+                    currentImage={user?.profileImage}
+                    onImageUploaded={handleImageUploaded}
+                    size={96}
+                    showOverlay={true}
+                    uploadEndpoint="/users/upload-profile-image"
+                    placeholderText="הוסף תמונת פרופיל"
+                />
                 <Text style={styles.name}>{fullName()}</Text>
                 {!!user?.email && <Text style={styles.email}>{user.email}</Text>}
             </View>
@@ -110,6 +130,11 @@ export default function CustomerProfile() {
                     title="אבטחה"
                     subtitle="סיסמה, אימות ועוד"
                     onPress={() => router.push("/security")} />
+                <Row
+                    icon="bell"
+                    title="הגדרות הודעות"
+                    subtitle="נהל את ההודעות והתראות"
+                    onPress={() => router.push("/notificationSettings")} />
             </View>
 
             <View style={styles.section}>
@@ -154,25 +179,6 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         borderWidth: 1,
         borderColor: '#e5e7eb'
-    },
-    avatarWrap: {
-        width: 96,
-        height: 96,
-        borderRadius: 999,
-        overflow: 'hidden',
-        borderWidth: 2,
-        borderColor: '#e5e7eb',
-        backgroundColor: '#f3f4f6',
-        marginBottom: 4
-    },
-    avatar: {
-        width: '100%',
-        height: '100%'
-    },
-    avatarFallback: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center'
     },
     name: {
         fontSize: 20,

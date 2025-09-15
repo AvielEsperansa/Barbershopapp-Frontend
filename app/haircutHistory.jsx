@@ -67,13 +67,11 @@ export default function HaircutHistory() {
         })
     }
 
-    const formatTime = (timeString) => {
-        return timeString
-    }
+
 
     if (loading) {
         return (
-            <SafeScreen paddingTop={5}>
+            <SafeScreen backgroundColor="#f8fafc">
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#3b82f6" />
                     <Text style={styles.loadingText}>טוען היסטוריית תספורות...</Text>
@@ -84,7 +82,7 @@ export default function HaircutHistory() {
 
     if (error) {
         return (
-            <SafeScreen paddingTop={5}>
+            <SafeScreen paddingTop={-20} backgroundColor="#f8fafc">
                 <View style={styles.errorContainer}>
                     <MaterialCommunityIcons name="alert-circle" size={48} color="#ef4444" />
                     <Text style={styles.errorText}>{error}</Text>
@@ -97,7 +95,7 @@ export default function HaircutHistory() {
     }
 
     return (
-        <SafeScreen paddingTop={5}>
+        <SafeScreen paddingTop={-20} backgroundColor="#f8fafc">
             <ScrollView style={styles.container} contentContainerStyle={styles.content}>
                 {/* Header */}
                 <View style={styles.header}>

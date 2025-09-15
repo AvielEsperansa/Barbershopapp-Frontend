@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Barbershopapp-Frontend",
-    "slug": "Barbershopapp-Frontend",
+    "name": "Barbershopapp",
+    "slug": "Barbershopapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
@@ -33,10 +33,25 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#3b82f6",
+          "defaultChannel": "barbershop-notifications"
+        }
       ]
     ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b130536c-9062-4374-8347-0db6f8065795"
+      }
+    },
+    "owner": "avieles100"
   }
 }

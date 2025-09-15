@@ -1,92 +1,11 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
-import AsyncStorage from '@react-native-async-storage/async-storage'
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
-import { useFocusEffect } from '@react-navigation/native'
-import { router } from 'expo-router'
-import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, Alert, Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
-import tokenManager from '../../lib/tokenManager'
+import React from 'react'
+import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 
 export default function CustomerDashboard() {
-    const [loading, setLoading] = useState(true)
-    const [isAuthenticated, setIsAuthenticated] = useState(false)
-
     const tabBarHeight = useBottomTabBarHeight()
 
-    // בדיקת אבטחה בטעינת הקומפוננט
-    useEffect(() => {
-        checkAuthentication()
-    }, [])
-
-    // בדיקת אבטחה כל פעם שהמסך מתמקד
-    useFocusEffect(
-        React.useCallback(() => {
-            checkAuthentication()
-        }, [])
-    )
-
-    const checkAuthentication = async () => {
-        try {
-            setLoading(true)
-
-            // בודק אם המשתמש מחובר
-            const isLoggedIn = await tokenManager.isLoggedIn()
-
-            if (!isLoggedIn) {
-                console.log('❌ User not logged in, redirecting to login')
-                Alert.alert('שגיאה', 'התחברות נדרשת', [
-                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-                ])
-                return
-            }
-
-            // בודק את התפקיד
-            const role = await AsyncStorage.getItem('role')
-            if (role !== 'customer') {
-                console.log('❌ User is not a customer, redirecting')
-                Alert.alert('שגיאה', 'גישה נדרשת ללקוח', [
-                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-                ])
-                return
-            }
-
-            // בודק אם הטוקן תקף על ידי ניסיון לרענן אותו
-            const tokenValid = await tokenManager.refreshTokenIfNeeded()
-            if (!tokenValid) {
-                console.log('❌ Token refresh failed, redirecting to login')
-                Alert.alert('שגיאה', 'התחברות פגה, יש להתחבר מחדש', [
-                    { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-                ])
-                return
-            }
-
-            setIsAuthenticated(true)
-            console.log('✅ Authentication check passed')
-
-        } catch (error) {
-            console.error('❌ Authentication check failed:', error)
-            Alert.alert('שגיאה', 'בעיה בבדיקת התחברות', [
-                { text: 'אישור', onPress: () => router.replace('/(auth)/') }
-            ])
-        } finally {
-            setLoading(false)
-        }
-    }
-
-    // מציג loading בזמן בדיקת אבטחה
-    if (loading) {
-        return (
-            <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#3b82f6" />
-                <Text style={styles.loadingText}>בודק התחברות...</Text>
-            </View>
-        )
-    }
-
-    // אם לא מחובר, לא מציג את התוכן
-    if (!isAuthenticated) {
-        return null
-    }
     const gallery = [
         // Local haircut photos
         { id: '1', src: require('../../assets/gallery/cut1.jpeg') },
