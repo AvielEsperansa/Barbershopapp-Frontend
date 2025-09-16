@@ -78,7 +78,7 @@ export default function Help() {
     }
 
     return (
-        <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#f8fafc">
             <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
 
             {/* Header */}

@@ -23,11 +23,12 @@ export default function BarberProfile() {
         fetchMe()
     }, [])
 
-    const handleImageUploaded = (newImageUrl) => {
+    const handleImageUploaded = async (newImageUrl) => {
         setUser(prevUser => ({
             ...prevUser,
             profileImage: newImageUrl
-        }));
+        }))
+        await fetchMe()
     };
 
     const fetchMe = async () => {
@@ -134,6 +135,7 @@ export default function BarberProfile() {
                         onImageUploaded={handleImageUploaded}
                         size={96}
                         showOverlay={true}
+                        fileFieldName="profileImage"
                         uploadEndpoint="/users/upload-profile-image"
                         placeholderText="הוסף תמונת פרופיל"
                     />

@@ -11,25 +11,26 @@ export default function CustomerProfile() {
     const [loading, setLoading] = useState(false)
     const [user, setUser] = useState(null)
 
+    const fetchMe = React.useCallback(async () => {
+        setLoading(true)
+        try {
+            const url = `${config.BASE_URL}/users/profile`
+            const res = await apiClient.get(url)
+            const json = await res.json()
+            if (!res.ok)
+                throw new Error(json?.error || 'Failed to load user profile')
+            console.log('📱 User profile data:', json.user)
+            setUser(json.user)
+        }
+        finally {
+            setLoading(false)
+        }
+    }, [])
+
     useFocusEffect(
         React.useCallback(() => {
-            const fetchMe = async () => {
-                setLoading(true)
-                try {
-                    const url = `${config.BASE_URL}/users/profile`
-                    const res = await apiClient.get(url)
-                    const json = await res.json()
-                    if (!res.ok)
-                        throw new Error(json?.error || 'Failed to load user profile')
-                    console.log('📱 User profile data:', json.user) // לוג לבדיקה
-                    setUser(json.user) // הנתונים נמצאים בתוך json.user
-                }
-                finally {
-                    setLoading(false)
-                }
-            }
             fetchMe()
-        }, [])
+        }, [fetchMe])
     )
 
     const fullName = () => {
@@ -37,12 +38,14 @@ export default function CustomerProfile() {
         if (user.firstName || user.lastName) return `${user.firstName || ''} ${user.lastName || ''}`.trim()
     }
 
-    const handleImageUploaded = (newImageUrl) => {
+    const handleImageUploaded = async (newImageUrl) => {
         setUser(prevUser => ({
             ...prevUser,
             profileImage: newImageUrl
-        }));
-    };
+        }))
+        // רענון מהשרת כדי למשוך את הנתונים המעודכנים
+        await fetchMe()
+    }
 
 
     const onLogout = () => {
@@ -107,10 +110,11 @@ export default function CustomerProfile() {
         <ScrollView contentContainerStyle={styles.container}>
             <View style={styles.header}>
                 <ImageUploader
-                    currentImage={user?.profileImage}
+                    currentImage={user?.profileImageData.url}
                     onImageUploaded={handleImageUploaded}
                     size={96}
-                    showOverlay={true}
+                    showOverlay={false}
+                    fileFieldName="profileImage"
                     uploadEndpoint="/users/upload-profile-image"
                     placeholderText="הוסף תמונת פרופיל"
                 />

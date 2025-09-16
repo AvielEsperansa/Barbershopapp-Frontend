@@ -116,7 +116,7 @@ export default function EditProfile() {
     }
 
     return (
-        <SafeScreen backgroundColor="white" paddingTop={-20}>
+        <SafeScreen backgroundColor="#f8fafc">
             <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 24 }]}>
                 <Text style={styles.title}>עריכת פרטים</Text>
                 {!!error && <Text style={styles.error}>{error}</Text>}
@@ -162,7 +162,7 @@ const styles = StyleSheet.create({
     container: {
         padding: 16,
         gap: 14,
-        backgroundColor: 'white'
+        backgroundColor: '#f8fafc'
     },
     title: {
         fontSize: 20,

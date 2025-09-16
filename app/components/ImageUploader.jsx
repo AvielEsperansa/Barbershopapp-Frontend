@@ -10,10 +10,11 @@ const ImageUploader = ({
     onImageUploaded,
     size = 120,
     showOverlay = true,
-    uploadEndpoint = '/users/test-upload',
+    uploadEndpoint = '/users/upload-profile-image',
     placeholderText = 'הוסף תמונת פרופיל',
     requireAuth = true,
-    localOnly = false
+    localOnly = false,
+    fileFieldName = 'profileImage'
 }) => {
     const [uploading, setUploading] = useState(false)
     const [imageError, setImageError] = useState(false)
@@ -56,57 +57,45 @@ const ImageUploader = ({
         try {
             setUploading(true);
 
-            // יצירת FormData
+            // ❌ אל תסיר file://
+            const uri = imageUri; // השאר כמו שהוא
+
+            const imageName = imageUri.split("/").pop() || `profile_${Date.now()}.jpg`;
+
             const formData = new FormData();
-            const imageName = imageUri.split('/').pop();
-            formData.append('profileImage', {
-                uri: imageUri,
-                type: 'image/jpeg',
-                name: imageName
+            formData.append(fileFieldName, {
+                uri,
+                name: imageName,
+                type: "image/jpeg", // בסדר לרוב; אם יש לך mime אמיתי – עדיף
             });
 
-            console.log('Uploading image:', imageUri);
-            console.log('FormData created');
-
-            // הכנת headers
-            const headers = {};
+            const headers = { Accept: "application/json" };
             if (requireAuth) {
                 const token = await tokenManager.getToken();
-                if (token) {
-                    headers['Authorization'] = `Bearer ${token}`;
-                }
+                if (token) headers["Authorization"] = `Bearer ${token}`;
             }
 
-            // שליחה לשרת
             const response = await fetch(`${config.BASE_URL}${uploadEndpoint}`, {
-                method: 'POST',
-                headers,
-                body: formData
+                method: "POST",
+                headers,            // ❗️לא להגדיר Content-Type ידנית
+                body: formData,
             });
 
-            console.log('Response status:', response.status);
             const data = await response.json();
-            console.log('Response data:', data);
+            if (!response.ok) throw new Error(data?.error || data?.message || "שגיאה בהעלאת התמונה");
 
-            if (!response.ok) {
-                throw new Error(data?.error || data?.message || 'שגיאה בהעלאת התמונה');
-            }
-
-            // קריאה לפונקציה שמעבירה את התמונה החדשה
             const newImageUrl = data.profileImage || data.imageUrl || data.url;
-            if (onImageUploaded) {
-                onImageUploaded(newImageUrl);
-            }
-
-            Alert.alert('הצלחה', 'התמונה הועלתה בהצלחה!');
-
+            onImageUploaded?.(newImageUrl);
+            Alert.alert("הצלחה", "התמונה הועלתה בהצלחה!");
         } catch (error) {
-            console.error('Error uploading image:', error);
-            Alert.alert('שגיאה', error.message || 'שגיאה בהעלאת התמונה');
+            console.error("Error uploading image:", error);
+            Alert.alert("שגיאה", error.message || "שגיאה בהעלאת התמונה");
         } finally {
             setUploading(false);
         }
     };
+
+
 
     const imageUrl = currentImage?.replace('/svg?', '/png?');
 

@@ -115,7 +115,7 @@ export default function MyAppointments() {
     )
 
     return (
-        <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#f8fafc">
             <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 24 }]}>
                 <View style={styles.header}>
                     <MaterialCommunityIcons name="calendar" size={22} color="#111827" />

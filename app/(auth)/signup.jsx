@@ -161,7 +161,8 @@ export default function Signup() {
                                 currentImage={selectedImage}
                                 onImageUploaded={handleImageUploaded}
                                 size={120}
-                                showOverlay={true}
+                                showOverlay={false}
+                                fileFieldName="profileImage"
                                 placeholderText="הוסף תמונת פרופיל"
                                 localOnly={true}
                             />

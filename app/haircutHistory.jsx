@@ -95,7 +95,7 @@ export default function HaircutHistory() {
     }
 
     return (
-        <SafeScreen paddingTop={-20} backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#f8fafc">
             <ScrollView style={styles.container} contentContainerStyle={styles.content}>
                 {/* Header */}
                 <View style={styles.header}>

@@ -4,6 +4,7 @@ import { router } from 'expo-router'
 import React, { useState } from 'react'
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
 import config from '../config'
+import SafeScreen from './components/SafeScreen'
 
 export default function Security() {
     const [loading, setLoading] = useState(false)
@@ -88,81 +89,83 @@ export default function Security() {
     )
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.header}>
-                <Pressable onPress={() => router.back()} style={styles.backButton}>
-                    <MaterialCommunityIcons name="arrow-right" size={24} color="#111827" />
-                </Pressable>
-                <Text style={styles.title}>הגדרות אבטחה</Text>
-            </View>
-
-            {!!error && <Text style={styles.error}>{error}</Text>}
-
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>שינוי סיסמה</Text>
-
-                <View style={styles.field}>
-                    <Text style={styles.label}>סיסמה נוכחית</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={currentPassword}
-                        onChangeText={setCurrentPassword}
-                        placeholder="הכנס סיסמה נוכחית"
-                        secureTextEntry
-                        textAlign="right"
-                    />
+        <SafeScreen backgroundColor="#f8fafc">
+            <ScrollView contentContainerStyle={styles.container}>
+                <View style={styles.header}>
+                    <Pressable onPress={() => router.back()} style={styles.backButton}>
+                        <MaterialCommunityIcons name="arrow-right" size={24} color="#111827" />
+                    </Pressable>
+                    <Text style={styles.title}>הגדרות אבטחה</Text>
                 </View>
 
-                <View style={styles.field}>
-                    <Text style={styles.label}>סיסמה חדשה</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={newPassword}
-                        onChangeText={setNewPassword}
-                        placeholder="הכנס סיסמה חדשה"
-                        secureTextEntry
-                        textAlign="right"
-                    />
+                {!!error && <Text style={styles.error}>{error}</Text>}
+
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>שינוי סיסמה</Text>
+
+                    <View style={styles.field}>
+                        <Text style={styles.label}>סיסמה נוכחית</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={currentPassword}
+                            onChangeText={setCurrentPassword}
+                            placeholder="הכנס סיסמה נוכחית"
+                            secureTextEntry
+                            textAlign="right"
+                        />
+                    </View>
+
+                    <View style={styles.field}>
+                        <Text style={styles.label}>סיסמה חדשה</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={newPassword}
+                            onChangeText={setNewPassword}
+                            placeholder="הכנס סיסמה חדשה"
+                            secureTextEntry
+                            textAlign="right"
+                        />
+                    </View>
+
+                    <View style={styles.field}>
+                        <Text style={styles.label}>אישור סיסמה חדשה</Text>
+                        <TextInput
+                            style={styles.input}
+                            value={confirmPassword}
+                            onChangeText={setConfirmPassword}
+                            placeholder="הכנס שוב את הסיסמה החדשה"
+                            secureTextEntry
+                            textAlign="right"
+                        />
+                    </View>
+
+                    <Pressable
+                        disabled={loading}
+                        onPress={onPasswordChange}
+                        style={[styles.saveButton, loading && { opacity: 0.7 }]}
+                    >
+                        <Text style={styles.saveButtonText}>שנה סיסמה</Text>
+                    </Pressable>
                 </View>
 
-                <View style={styles.field}>
-                    <Text style={styles.label}>אישור סיסמה חדשה</Text>
-                    <TextInput
-                        style={styles.input}
-                        value={confirmPassword}
-                        onChangeText={setConfirmPassword}
-                        placeholder="הכנס שוב את הסיסמה החדשה"
-                        secureTextEntry
-                        textAlign="right"
-                    />
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>הגדרות</Text>
+
+                    <SecurityRow
+                        icon="bell"
+                        title="התראות"
+                        subtitle="קבל התראות על תורים ועדכונים"
+                    >
+                        <Switch
+                            value={notificationsEnabled}
+                            onValueChange={onNotificationToggle}
+                            trackColor={{ false: '#e5e7eb', true: '#3b82f6' }}
+                            thumbColor={notificationsEnabled ? '#fff' : '#f3f4f6'}
+                        />
+                    </SecurityRow>
                 </View>
-
-                <Pressable
-                    disabled={loading}
-                    onPress={onPasswordChange}
-                    style={[styles.saveButton, loading && { opacity: 0.7 }]}
-                >
-                    <Text style={styles.saveButtonText}>שנה סיסמה</Text>
-                </Pressable>
-            </View>
-
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>הגדרות</Text>
-
-                <SecurityRow
-                    icon="bell"
-                    title="התראות"
-                    subtitle="קבל התראות על תורים ועדכונים"
-                >
-                    <Switch
-                        value={notificationsEnabled}
-                        onValueChange={onNotificationToggle}
-                        trackColor={{ false: '#e5e7eb', true: '#3b82f6' }}
-                        thumbColor={notificationsEnabled ? '#fff' : '#f3f4f6'}
-                    />
-                </SecurityRow>
-            </View>
-        </ScrollView>
+            </ScrollView>
+        </SafeScreen>
     )
 }
 

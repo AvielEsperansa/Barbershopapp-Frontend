@@ -69,7 +69,7 @@ export default function Index() {
   }
 
   return (
-    <SafeScreen>
+    <SafeScreen backgroundColor="#1a1a1a">
       <View style={styles.container}>
 
         {/* Header Section */}

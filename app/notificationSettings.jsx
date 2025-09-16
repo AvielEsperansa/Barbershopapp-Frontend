@@ -5,7 +5,6 @@ import notificationManager from '../lib/notificationManager'
 import SafeScreen from './components/SafeScreen'
 
 export default function NotificationSettings() {
-    const [loading, setLoading] = useState(false)
     const [notifications, setNotifications] = useState({
         appointmentReminders: true,
         newAppointments: true,
@@ -45,7 +44,8 @@ export default function NotificationSettings() {
             )
             Alert.alert('הצלחה', 'הודעת בדיקה נשלחה')
         } catch (error) {
-            Alert.alert('שגיאה', 'נכשל לשלוח הודעת בדיקה')
+            console.log(error)
+            Alert.alert('שגיאה', error.message || 'נכשל לשלוח הודעת בדיקה')
         }
     }
 
@@ -64,7 +64,8 @@ export default function NotificationSettings() {
                             await loadScheduledNotifications()
                             Alert.alert('הצלחה', 'כל ההודעות נמחקו')
                         } catch (error) {
-                            Alert.alert('שגיאה', 'נכשל למחוק את ההודעות')
+                            console.log(error)
+                            Alert.alert('שגיאה', error.message || 'נכשל למחוק את ההודעות')
                         }
                     }
                 }
@@ -99,7 +100,7 @@ export default function NotificationSettings() {
     )
 
     return (
-        <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#f8fafc">
             <ScrollView style={styles.container}>
                 <View style={styles.header}>
                     <MaterialCommunityIcons name="bell" size={48} color="#3b82f6" />
