@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { router } from 'expo-router'
 import React from 'react'
-import { ScrollView, StyleSheet, Text, View } from 'react-native'
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import SafeScreen from '../components/SafeScreen'
 
 export default function Dashboard() {
@@ -41,10 +42,13 @@ export default function Dashboard() {
                         <Text style={styles.actionText}>הוסף זמינות חדשה</Text>
                     </View>
 
-                    <View style={styles.actionCard}>
+                    <TouchableOpacity
+                        style={styles.actionCard}
+                        onPress={() => router.push('/(barberTabs)/Customers')}
+                    >
                         <MaterialCommunityIcons name="account-multiple" size={24} color="#10b981" />
                         <Text style={styles.actionText}>צפה בלקוחות</Text>
-                    </View>
+                    </TouchableOpacity>
 
                     <View style={styles.actionCard}>
                         <MaterialCommunityIcons name="chart-line" size={24} color="#f59e0b" />

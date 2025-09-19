@@ -28,6 +28,12 @@ export default function _layout() {
                     <MaterialCommunityIcons name="calendar" color={color} size={size} />
                 ),
             }} />
+            <Tabs.Screen name="Customers" options={{
+                title: "לקוחות",
+                tabBarIcon: ({ color, size }) => (
+                    <MaterialCommunityIcons name="account-multiple" color={color} size={size} />
+                ),
+            }} />
             <Tabs.Screen name="barberProfile" options={{
                 title: "פרופיל",
                 tabBarIcon: ({ color, size }) => (

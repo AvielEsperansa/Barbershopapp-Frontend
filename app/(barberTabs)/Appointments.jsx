@@ -6,11 +6,13 @@ import React, { useCallback, useEffect, useState } from 'react'
 import {
     ActivityIndicator,
     Alert,
+    Modal,
     Pressable,
     ScrollView,
     StyleSheet,
     Switch,
     Text,
+    TouchableOpacity,
     View
 } from 'react-native'
 import config from '../../config'
@@ -20,6 +22,9 @@ import SafeScreen from '../components/SafeScreen'
 export default function Appointments() {
     const [activeTab, setActiveTab] = useState('appointments')
     const [barberId, setBarberId] = useState('')
+
+    // Appointments State
+    const [appointmentsLoading, setAppointmentsLoading] = useState(false)
 
     // Working Hours State
     const [workingHours, setWorkingHours] = useState({})
@@ -38,16 +43,20 @@ export default function Appointments() {
         if (barberId) {
             loadWorkingHours()
             loadDayOffs()
+            loadTodayAppointments()
+            loadFutureAppointments()
         }
-    }, [barberId, loadWorkingHours, loadDayOffs])
+    }, [barberId, loadWorkingHours, loadDayOffs, loadTodayAppointments, loadFutureAppointments])
 
     useFocusEffect(
         React.useCallback(() => {
             if (barberId) {
                 loadWorkingHours()
                 loadDayOffs()
+                loadTodayAppointments()
+                loadFutureAppointments()
             }
-        }, [barberId, loadWorkingHours, loadDayOffs])
+        }, [barberId, loadWorkingHours, loadDayOffs, loadTodayAppointments, loadFutureAppointments])
     )
 
     // טוען את הפרופיל של הספר בהתחלה
@@ -65,6 +74,32 @@ export default function Appointments() {
         }
         loadProfile()
     }, [])
+
+
+    const loadAppointmentsByType = useCallback(async (type) => {
+        try {
+            console.log(`🌐 Fetching appointments for type: ${type}, barber: ${barberId}`)
+            setAppointmentsLoading(true)
+            const response = await apiClient.get(`${config.BASE_URL}/appointments/barber/${barberId}/customers?type=${type}`)
+            console.log(`📡 API Response status: ${response.status}`)
+
+            if (response.ok) {
+                const data = await response.json()
+                console.log(`✅ API Response data:`, data)
+                const appointments = data.appointments || []
+                console.log(`📋 Appointments count: ${appointments.length}`)
+                return appointments
+            } else {
+                console.error('❌ Error loading appointments:', response.status)
+                return []
+            }
+        } catch (error) {
+            console.error('❌ Error loading appointments:', error)
+            return []
+        } finally {
+            setAppointmentsLoading(false)
+        }
+    }, [barberId])
 
     const loadWorkingHours = useCallback(async () => {
         try {
@@ -173,11 +208,12 @@ export default function Appointments() {
 
     const formatDate = (dateString) => {
         const date = new Date(dateString)
-        return date.toLocaleDateString('he-IL', {
+        const formatted = date.toLocaleDateString('he-IL', {
             year: 'numeric',
             month: 'long',
             day: 'numeric'
         })
+        return formatted
     }
 
     const formatTime = (time) => {
@@ -212,8 +248,204 @@ export default function Appointments() {
         return date
     }
 
+    // State for filtered appointments
+    const [todayAppointments, setTodayAppointments] = useState([])
+    const [futureAppointments, setFutureAppointments] = useState([])
+
+    // State for reschedule functionality
+    const [showRescheduleModal, setShowRescheduleModal] = useState(false)
+    const [selectedAppointment, setSelectedAppointment] = useState(null)
+    const [selectedNewTime, setSelectedNewTime] = useState('')
+    const [availableTimes, setAvailableTimes] = useState([])
+    const [loadingAvailableTimes, setLoadingAvailableTimes] = useState(false)
+    const [showPastDayOffs, setShowPastDayOffs] = useState(false)
+
+    // פונקציה לסינון ימי חופש
+    const getFilteredDayOffs = useCallback(() => {
+        if (showPastDayOffs) {
+            return dayOffs // הצג את כל ימי החופש
+        } else {
+            // הצג רק ימי חופש עתידיים
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            return dayOffs.filter(dayOff => {
+                const dayOffDate = new Date(dayOff.date)
+                return dayOffDate >= today
+            })
+        }
+    }, [dayOffs, showPastDayOffs])
+
+    // פונקציות עזר לעיבוד התורים
+    const loadTodayAppointments = useCallback(async () => {
+        const appointments = await loadAppointmentsByType('today')
+        setTodayAppointments(appointments)
+    }, [loadAppointmentsByType])
+
+    const loadFutureAppointments = useCallback(async () => {
+        console.log('🔄 Loading future appointments...')
+        const today = new Date().toISOString().split('T')[0]
+        console.log('📅 Today date:', today)
+
+        const appointments = await loadAppointmentsByType('future')
+        console.log('📋 All future appointments from API:', appointments?.length || 0)
+
+        const futureApps = appointments.filter(appointment => {
+            const appointmentDate = new Date(appointment.date).toISOString().split('T')[0]
+            const isFuture = appointmentDate > today
+            console.log(`📅 Appointment ${appointment._id}: ${appointmentDate} > ${today} = ${isFuture}`)
+            return isFuture
+        })
+
+        console.log('🎯 Filtered future appointments:', futureApps.length)
+        console.log('📋 Future appointments details:', futureApps.map(apt => ({
+            id: apt._id,
+            date: apt.date,
+            time: apt.startTime,
+            customer: `${apt.customer?.firstName} ${apt.customer?.lastName}`,
+            fullAppointment: apt // לוג של כל התור
+        })))
+
+        setFutureAppointments(futureApps)
+    }, [loadAppointmentsByType])
+
+    // פונקציות לשינוי שעת התור
+    const openRescheduleModal = useCallback((appointment) => {
+        setSelectedAppointment(appointment)
+        setShowRescheduleModal(true)
+        generateAvailableTimes(appointment)
+    }, [generateAvailableTimes])
+
+    const generateAvailableTimes = useCallback(async (appointment) => {
+        console.log('🔄 Loading available times for appointment:', appointment._id, 'on date:', appointment.date)
+        setLoadingAvailableTimes(true)
+        setSelectedNewTime('') // מאפס את הבחירה הקודמת
+
+        try {
+            const appointmentDate = new Date(appointment.date).toISOString().split('T')[0]
+            console.log('📅 Fetching slots for date:', appointmentDate, 'barber:', barberId)
+            console.log('🔍 BarberId type:', typeof barberId, 'value:', barberId)
+
+            // קבלת השעות הפנויות מהבקנד
+            const query = new URLSearchParams({
+                barberId: barberId,
+                date: appointmentDate,
+            }).toString()
+
+            const response = await apiClient.get(`${config.BASE_URL}/appointments/slots?${query}`)
+            if (response.ok) {
+                const data = await response.json()
+                console.log('📡 Full API Response:', JSON.stringify(data, null, 2))
+                console.log('✅ Received slots:', data.slots)
+
+
+                // מסנן את השעה הנוכחית של התור ומסיר כפילויות
+                const slots = Array.isArray(data.slots) ? data.slots : []
+
+                // חילוץ רק את startTime מהאובייקטים
+                const startTimes = slots.map(slot => slot.startTime)
+                console.log('🔍 Extracted startTimes:', startTimes)
+
+                const uniqueSlots = [...new Set(startTimes)] // הסרת כפילויות
+                console.log('🔍 Unique slots after deduplication:', uniqueSlots)
+
+                const availableTimes = uniqueSlots.filter(time => time !== appointment.startTime)
+                console.log('🎯 Available times after filtering:', availableTimes)
+
+                setAvailableTimes(availableTimes)
+            } else {
+                // אם הבקנד לא מחזיר נתונים
+                console.log('❌ Failed to get available times')
+                console.log('❌ Response status:', response.status)
+                console.log('❌ Response statusText:', response.statusText)
+                const errorData = await response.text()
+                console.log('❌ Error response:', errorData)
+                setAvailableTimes([])
+            }
+        } catch (error) {
+            console.error('❌ Error getting available times:', error)
+            setAvailableTimes([])
+        } finally {
+            setLoadingAvailableTimes(false)
+        }
+    }, [barberId])
+
+
+    const rescheduleAppointment = useCallback(async () => {
+        if (!selectedAppointment || !selectedNewTime) return
+
+        try {
+            const url = `${config.BASE_URL}/appointments/${selectedAppointment._id}/reschedule`
+            const response = await apiClient.put(url, {
+                newStartTime: selectedNewTime
+            })
+
+            if (response.ok) {
+                Alert.alert('הצלחה', 'שעת התור שונתה בהצלחה')
+                setShowRescheduleModal(false)
+                setSelectedAppointment(null)
+                setSelectedNewTime('')
+                // רענון התורים
+                loadTodayAppointments()
+                loadFutureAppointments()
+            } else {
+                Alert.alert('שגיאה', 'לא ניתן לשנות את שעת התור')
+            }
+        } catch (error) {
+            console.error('Error rescheduling appointment:', error)
+            Alert.alert('שגיאה', 'אירעה שגיאה בעת שינוי שעת התור')
+        }
+    }, [selectedAppointment, selectedNewTime, loadTodayAppointments, loadFutureAppointments])
+
+    const cancelAppointment = (appointmentId) => {
+        Alert.alert(
+            'ביטול תור',
+            'האם אתה בטוח שברצונך לבטל את התור?',
+            [
+                { text: 'ביטול', style: 'cancel' },
+                {
+                    text: 'אישור',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            const url = `${config.BASE_URL}/appointments/${appointmentId}`
+                            const response = await apiClient.delete(url)
+                            if (response.ok) {
+                                Alert.alert('הצלחה', 'התור בוטל בהצלחה')
+                                loadTodayAppointments()
+                                loadFutureAppointments()
+                            } else {
+                                console.error('❌ Error canceling appointment:', response.status)
+                                Alert.alert('שגיאה', 'לא ניתן לבטל את התור')
+                            }
+                        } catch (error) {
+                            console.error('❌ Error canceling appointment:', error)
+                            Alert.alert('שגיאה', 'אירעה שגיאה בביטול התור')
+                        }
+                    }
+                }
+            ]
+        )
+    }
+
+    const confirmAppointment = async (appointmentId) => {
+        try {
+            const response = await apiClient.put(`/appointments/${appointmentId}/confirm`)
+            if (response.ok) {
+                Alert.alert('הצלחה', 'התור אושר בהצלחה')
+                // loadAppointments() // רענון הנתונים
+                loadTodayAppointments()
+                loadFutureAppointments()
+            } else {
+                Alert.alert('שגיאה', 'לא ניתן לאשר את התור')
+            }
+        } catch (error) {
+            console.error('Error confirming appointment:', error)
+            Alert.alert('שגיאה', 'אירעה שגיאה באישור התור')
+        }
+    }
+
     return (
-        <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#f8fafc">
             <View style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
@@ -271,13 +503,155 @@ export default function Appointments() {
                 <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
                     {activeTab === 'appointments' && (
                         <View style={styles.tabContent}>
+                            {/* תורים היום */}
                             <View style={styles.section}>
                                 <Text style={styles.sectionTitle}>תורים היום</Text>
-                                <View style={styles.emptyState}>
-                                    <MaterialCommunityIcons name="calendar-check" size={48} color="#9ca3af" />
-                                    <Text style={styles.emptyText}>אין תורים היום</Text>
-                                    <Text style={styles.emptySubtext}>התורים יופיעו כאן כשהלקוחות יקבעו תורים</Text>
-                                </View>
+                                {appointmentsLoading ? (
+                                    <View style={styles.loadingState}>
+                                        <ActivityIndicator size="large" color="#3b82f6" />
+                                        <Text style={styles.loadingText}>טוען תורים...</Text>
+                                    </View>
+                                ) : todayAppointments.length === 0 ? (
+                                    <View style={styles.emptyState}>
+                                        <MaterialCommunityIcons name="calendar-check" size={48} color="#9ca3af" />
+                                        <Text style={styles.emptyText}>אין תורים היום</Text>
+                                        <Text style={styles.emptySubtext}>התורים יופיעו כאן כשהלקוחות יקבעו תורים</Text>
+                                    </View>
+                                ) : (
+                                    <View style={styles.appointmentsList}>
+                                        {todayAppointments.map((appointment) => (
+                                            <View key={appointment._id} style={styles.appointmentCard}>
+                                                <View style={styles.appointmentHeader}>
+                                                    <Text style={styles.appointmentTime}>{appointment.startTime}</Text>
+                                                    <View style={[styles.statusBadge, { backgroundColor: '#10b981' }]}>
+                                                        <Text style={styles.statusText}>מאושר</Text>
+                                                    </View>
+                                                </View>
+                                                <View style={styles.appointmentDetails}>
+                                                    <Text style={styles.customerName}>
+                                                        {appointment.customer?.firstName} {appointment.customer?.lastName}
+                                                    </Text>
+                                                    <Text style={styles.serviceText}>שירות: {appointment.service?.name}</Text>
+                                                    <Text style={styles.priceText}>מחיר: ₪{appointment.totalPrice}</Text>
+                                                    <Text style={styles.durationText}>משך: {appointment.service?.durationMinutes} דקות</Text>
+                                                    {appointment.notes && (
+                                                        <Text style={styles.notesText}>הערות: {appointment.notes}</Text>
+                                                    )}
+                                                </View>
+
+                                                {/* כפתורי פעולה */}
+                                                <View style={styles.appointmentActions}>
+                                                    {appointment.status === 'pending' && (
+                                                        <TouchableOpacity
+                                                            style={[styles.actionButton, styles.confirmButton]}
+                                                            onPress={() => confirmAppointment(appointment._id)}
+                                                        >
+                                                            <MaterialCommunityIcons name="check" size={16} color="#ffffff" />
+                                                            <Text style={styles.actionButtonText}>אשר</Text>
+                                                        </TouchableOpacity>
+                                                    )}
+
+                                                    {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
+                                                        <>
+                                                            <TouchableOpacity
+                                                                style={[styles.actionButton, styles.rescheduleButton]}
+                                                                onPress={() => openRescheduleModal(appointment)}
+                                                            >
+                                                                <MaterialCommunityIcons name="clock-edit" size={16} color="#ffffff" />
+                                                                <Text style={styles.actionButtonText}>שנה שעה</Text>
+                                                            </TouchableOpacity>
+
+                                                            <TouchableOpacity
+                                                                style={[styles.actionButton, styles.cancelButton]}
+                                                                onPress={() => cancelAppointment(appointment._id)}
+                                                            >
+                                                                <MaterialCommunityIcons name="close" size={16} color="#ffffff" />
+                                                                <Text style={styles.actionButtonText}>בטל</Text>
+                                                            </TouchableOpacity>
+                                                        </>
+                                                    )}
+                                                </View>
+                                            </View>
+                                        ))}
+                                    </View>
+                                )}
+                            </View>
+
+                            {/* תורים עתידיים */}
+                            <View style={styles.section}>
+                                <Text style={styles.sectionTitle}>תורים עתידיים</Text>
+                                {appointmentsLoading ? (
+                                    <View style={styles.loadingState}>
+                                        <ActivityIndicator size="large" color="#3b82f6" />
+                                        <Text style={styles.loadingText}>טוען תורים...</Text>
+                                    </View>
+                                ) : futureAppointments.length === 0 ? (
+                                    <View style={styles.emptyState}>
+                                        <MaterialCommunityIcons name="calendar-clock" size={48} color="#9ca3af" />
+                                        <Text style={styles.emptyText}>אין תורים עתידיים</Text>
+                                        <Text style={styles.emptySubtext}>התורים העתידיים יופיעו כאן</Text>
+                                    </View>
+                                ) : (
+                                    <View style={styles.appointmentsList}>
+                                        {futureAppointments.map((appointment) => (
+                                            <View key={appointment._id} style={styles.appointmentCard}>
+                                                <View style={styles.appointmentHeader}>
+                                                    <View style={styles.dateTimeInfo}>
+                                                        <Text style={styles.appointmentDate}>{formatDate(appointment.date)}</Text>
+                                                        <Text style={styles.appointmentTime}>{appointment.startTime}</Text>
+                                                    </View>
+                                                    <View style={[styles.statusBadge, { backgroundColor: '#10b981' }]}>
+                                                        <Text style={styles.statusText}>מאושר</Text>
+                                                    </View>
+                                                </View>
+                                                <View style={styles.appointmentDetails}>
+                                                    <Text style={styles.customerName}>
+                                                        {appointment.customer?.firstName} {appointment.customer?.lastName}
+                                                    </Text>
+                                                    <Text style={styles.serviceText}>שירות: {appointment.service?.name}</Text>
+                                                    <Text style={styles.priceText}>מחיר: ₪{appointment.totalPrice}</Text>
+                                                    <Text style={styles.durationText}>משך: {appointment.service?.durationMinutes} דקות</Text>
+                                                    {appointment.notes && (
+                                                        <Text style={styles.notesText}>הערות: {appointment.notes}</Text>
+                                                    )}
+                                                </View>
+
+                                                {/* כפתורי פעולה */}
+                                                <View style={styles.appointmentActions}>
+                                                    {appointment.status === 'pending' && (
+                                                        <TouchableOpacity
+                                                            style={[styles.actionButton, styles.confirmButton]}
+                                                            onPress={() => confirmAppointment(appointment._id)}
+                                                        >
+                                                            <MaterialCommunityIcons name="check" size={16} color="#ffffff" />
+                                                            <Text style={styles.actionButtonText}>אשר</Text>
+                                                        </TouchableOpacity>
+                                                    )}
+
+                                                    {appointment.status !== 'cancelled' && appointment.status !== 'completed' && (
+                                                        <>
+                                                            <TouchableOpacity
+                                                                style={[styles.actionButton, styles.rescheduleButton]}
+                                                                onPress={() => openRescheduleModal(appointment)}
+                                                            >
+                                                                <MaterialCommunityIcons name="clock-edit" size={16} color="#ffffff" />
+                                                                <Text style={styles.actionButtonText}>שנה שעה</Text>
+                                                            </TouchableOpacity>
+
+                                                            <TouchableOpacity
+                                                                style={[styles.actionButton, styles.cancelButton]}
+                                                                onPress={() => cancelAppointment(appointment._id)}
+                                                            >
+                                                                <MaterialCommunityIcons name="close" size={16} color="#ffffff" />
+                                                                <Text style={styles.actionButtonText}>בטל</Text>
+                                                            </TouchableOpacity>
+                                                        </>
+                                                    )}
+                                                </View>
+                                            </View>
+                                        ))}
+                                    </View>
+                                )}
                             </View>
                         </View>
                     )}
@@ -374,13 +748,28 @@ export default function Appointments() {
                             <View style={styles.section}>
                                 <View style={styles.sectionHeader}>
                                     <Text style={styles.sectionTitle}>ימי חופש</Text>
-                                    <Pressable
-                                        style={styles.addButton}
-                                        onPress={() => router.push('/(barberTabs)/addDayOff')}
-                                    >
-                                        <MaterialCommunityIcons name="plus" size={16} color="#ffffff" />
-                                        <Text style={styles.addButtonText}>הוסף</Text>
-                                    </Pressable>
+                                    <View style={styles.headerButtons}>
+                                        <Pressable
+                                            style={[styles.filterButton, showPastDayOffs && styles.activeFilterButton]}
+                                            onPress={() => setShowPastDayOffs(!showPastDayOffs)}
+                                        >
+                                            <MaterialCommunityIcons
+                                                name="filter"
+                                                size={16}
+                                                color={showPastDayOffs ? '#ffffff' : '#3b82f6'}
+                                            />
+                                            <Text style={[styles.filterButtonText, showPastDayOffs && styles.activeFilterButtonText]}>
+                                                {showPastDayOffs ? 'הסתר עבר' : 'הצג עבר'}
+                                            </Text>
+                                        </Pressable>
+                                        <Pressable
+                                            style={styles.addButton}
+                                            onPress={() => router.push('/addDayOff')}
+                                        >
+                                            <MaterialCommunityIcons name="plus" size={16} color="#ffffff" />
+                                            <Text style={styles.addButtonText}>הוסף</Text>
+                                        </Pressable>
+                                    </View>
                                 </View>
 
                                 {dayOffsLoading ? (
@@ -388,14 +777,18 @@ export default function Appointments() {
                                         <ActivityIndicator size="large" color="#3b82f6" />
                                         <Text style={styles.loadingText}>טוען ימי חופש...</Text>
                                     </View>
-                                ) : dayOffs.length === 0 ? (
+                                ) : getFilteredDayOffs().length === 0 ? (
                                     <View style={styles.emptyState}>
                                         <MaterialCommunityIcons name="calendar-remove" size={48} color="#9ca3af" />
-                                        <Text style={styles.emptyText}>אין ימי חופש מוגדרים</Text>
-                                        <Text style={styles.emptySubtext}>לחץ על &quot;הוסף&quot; כדי להוסיף יום חופש</Text>
+                                        <Text style={styles.emptyText}>
+                                            {showPastDayOffs ? 'אין ימי חופש עתידיים' : 'אין ימי חופש מוגדרים'}
+                                        </Text>
+                                        <Text style={styles.emptySubtext}>
+                                            {showPastDayOffs ? 'כל ימי החופש כבר עברו' : 'לחץ על "הוסף" כדי להוסיף יום חופש'}
+                                        </Text>
                                     </View>
                                 ) : (
-                                    dayOffs.map((dayOff) => (
+                                    getFilteredDayOffs().map((dayOff) => (
                                         <View key={dayOff._id} style={styles.dayOffCard}>
                                             <View style={styles.dayOffHeader}>
                                                 <View style={styles.dayOffInfo}>
@@ -470,6 +863,96 @@ export default function Appointments() {
                     />
                 </View>
             )}
+
+            {/* מודל לשינוי שעת התור */}
+            <Modal
+                visible={showRescheduleModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowRescheduleModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>שנה שעת תור</Text>
+                            <TouchableOpacity
+                                onPress={() => setShowRescheduleModal(false)}
+                                style={styles.modalCloseButton}
+                            >
+                                <MaterialCommunityIcons name="close" size={24} color="#6b7280" />
+                            </TouchableOpacity>
+                        </View>
+
+                        {selectedAppointment && (
+                            <View style={styles.appointmentInfo}>
+                                <Text style={styles.customerInfo}>
+                                    לקוח: {selectedAppointment.customer?.firstName} {selectedAppointment.customer?.lastName}
+                                </Text>
+                                <Text style={styles.serviceInfo}>
+                                    שירות: {selectedAppointment.service?.name}
+                                </Text>
+                                <Text style={styles.currentTimeInfo}>
+                                    שעה נוכחית: {selectedAppointment.startTime}
+                                </Text>
+                            </View>
+                        )}
+
+                        <Text style={styles.timeSelectionTitle}>בחר שעה חדשה:</Text>
+                        {loadingAvailableTimes ? (
+                            <View style={styles.loadingTimesContainer}>
+                                <ActivityIndicator size="small" color="#3b82f6" />
+                                <Text style={styles.loadingTimesText}>טוען שעות פנויות...</Text>
+                            </View>
+                        ) : availableTimes.length === 0 ? (
+                            <View style={styles.noTimesContainer}>
+                                <Text style={styles.noTimesText}>אין שעות פנויות זמינות</Text>
+                            </View>
+                        ) : (
+                            <ScrollView style={styles.timeSelectionContainer} showsVerticalScrollIndicator={false}>
+                                <View style={styles.timeGrid}>
+                                    {availableTimes.map((time, index) => (
+                                        <TouchableOpacity
+                                            key={`${time}-${index}`}
+                                            style={[
+                                                styles.timeOption,
+                                                selectedNewTime === time && styles.selectedTimeOption
+                                            ]}
+                                            onPress={() => setSelectedNewTime(time)}
+                                        >
+                                            <Text style={[
+                                                styles.timeOptionText,
+                                                selectedNewTime === time && styles.selectedTimeOptionText
+                                            ]}>
+                                                {time}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
+                            </ScrollView>
+                        )}
+
+                        <View style={styles.modalActions}>
+                            <TouchableOpacity
+                                style={[styles.modalButton, styles.cancelModalButton]}
+                                onPress={() => setShowRescheduleModal(false)}
+                            >
+                                <Text style={styles.cancelModalButtonText}>ביטול</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[
+                                    styles.modalButton,
+                                    styles.confirmModalButton,
+                                    !selectedNewTime && styles.disabledButton
+                                ]}
+                                onPress={rescheduleAppointment}
+                                disabled={!selectedNewTime}
+                            >
+                                <Text style={styles.confirmModalButtonText}>שנה שעה</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </SafeScreen>
     )
 }
@@ -579,6 +1062,34 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '600',
         textAlign: 'right'
+    },
+    headerButtons: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    filterButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 6,
+        borderRadius: 6,
+        borderWidth: 1,
+        borderColor: '#3b82f6',
+        backgroundColor: 'transparent',
+    },
+    activeFilterButton: {
+        backgroundColor: '#3b82f6',
+        borderColor: '#3b82f6',
+    },
+    filterButtonText: {
+        color: '#3b82f6',
+        fontSize: 12,
+        fontWeight: '500',
+        marginLeft: 4,
+    },
+    activeFilterButtonText: {
+        color: '#ffffff',
     },
     emptyState: {
         alignItems: 'center',
@@ -791,5 +1302,241 @@ const styles = StyleSheet.create({
     timePicker: {
         width: 200,
         height: 200
+    },
+    appointmentsList: {
+        padding: 16,
+        gap: 12
+    },
+    appointmentCard: {
+        backgroundColor: '#f8fafc',
+        borderRadius: 12,
+        padding: 16,
+        borderWidth: 1,
+        borderColor: '#e5e7eb'
+    },
+    appointmentHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 12
+    },
+    dateTimeInfo: {
+        alignItems: 'flex-end'
+    },
+    appointmentDate: {
+        fontSize: 14,
+        color: '#6b7280',
+        marginBottom: 2
+    },
+    appointmentTime: {
+        fontSize: 18,
+        fontWeight: '600',
+        color: '#111827'
+    },
+    statusBadge: {
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6
+    },
+    statusText: {
+        fontSize: 12,
+        color: '#ffffff',
+        fontWeight: '500'
+    },
+    appointmentDetails: {
+        gap: 6
+    },
+    customerName: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#111827',
+        textAlign: 'right'
+    },
+    serviceText: {
+        fontSize: 14,
+        color: '#6b7280',
+        textAlign: 'right'
+    },
+    priceText: {
+        fontSize: 14,
+        color: '#10b981',
+        fontWeight: '600',
+        textAlign: 'right'
+    },
+    durationText: {
+        fontSize: 14,
+        color: '#6b7280',
+        textAlign: 'right'
+    },
+    notesText: {
+        fontSize: 14,
+        color: '#6b7280',
+        fontStyle: 'italic',
+        textAlign: 'right'
+    },
+    appointmentActions: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        gap: 8,
+        marginTop: 12
+    },
+    actionButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 6,
+        gap: 4
+    },
+    confirmButton: {
+        backgroundColor: '#10b981'
+    },
+    cancelButton: {
+        backgroundColor: '#ef4444'
+    },
+    rescheduleButton: {
+        backgroundColor: '#f59e0b'
+    },
+    actionButtonText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#ffffff'
+    },
+
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 20
+    },
+    modalContent: {
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
+        padding: 20,
+        width: '100%',
+        maxHeight: '80%'
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: '700',
+        color: '#1f2937'
+    },
+    modalCloseButton: {
+        padding: 4
+    },
+    appointmentInfo: {
+        backgroundColor: '#f3f4f6',
+        borderRadius: 8,
+        padding: 12,
+        marginBottom: 20
+    },
+    customerInfo: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1f2937',
+        marginBottom: 4
+    },
+    serviceInfo: {
+        fontSize: 14,
+        color: '#6b7280',
+        marginBottom: 4
+    },
+    currentTimeInfo: {
+        fontSize: 14,
+        color: '#6b7280'
+    },
+    timeSelectionTitle: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#1f2937',
+        marginBottom: 12
+    },
+    loadingTimesContainer: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 20
+    },
+    loadingTimesText: {
+        fontSize: 14,
+        color: '#6b7280',
+        marginLeft: 8
+    },
+    noTimesContainer: {
+        alignItems: 'center',
+        paddingVertical: 20
+    },
+    noTimesText: {
+        fontSize: 14,
+        color: '#6b7280',
+        textAlign: 'center'
+    },
+    timeSelectionContainer: {
+        maxHeight: 200,
+        marginBottom: 20
+    },
+    timeGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8
+    },
+    timeOption: {
+        backgroundColor: '#f3f4f6',
+        borderRadius: 8,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        marginRight: 8,
+        marginBottom: 8,
+        minWidth: 60,
+        alignItems: 'center'
+    },
+    selectedTimeOption: {
+        backgroundColor: '#3b82f6'
+    },
+    timeOptionText: {
+        fontSize: 14,
+        fontWeight: '500',
+        color: '#6b7280'
+    },
+    selectedTimeOptionText: {
+        color: '#ffffff'
+    },
+    modalActions: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        gap: 12
+    },
+    modalButton: {
+        flex: 1,
+        paddingVertical: 12,
+        borderRadius: 8,
+        alignItems: 'center'
+    },
+    cancelModalButton: {
+        backgroundColor: '#f3f4f6'
+    },
+    confirmModalButton: {
+        backgroundColor: '#3b82f6'
+    },
+    disabledButton: {
+        backgroundColor: '#d1d5db'
+    },
+    cancelModalButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#6b7280'
+    },
+    confirmModalButtonText: {
+        fontSize: 16,
+        fontWeight: '600',
+        color: '#ffffff'
     }
 })

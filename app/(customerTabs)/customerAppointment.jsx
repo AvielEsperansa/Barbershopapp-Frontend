@@ -256,10 +256,22 @@ export default function CustomerAppointment() {
         setLoading(true)
         setError('')
         try {
+            // יצירת תאריך ללא timezone conversion
+            const appointmentDate = new Date(selectedDate)
+            // נוסיף את השעה המקומית כדי למנוע בעיות timezone
+            appointmentDate.setHours(12, 0, 0, 0) // שעה 12:00 כדי להיות בטוחים
+
+            console.log('📅 Creating appointment with date:', {
+                selectedDate: selectedDate,
+                appointmentDate: appointmentDate,
+                isoString: appointmentDate.toISOString(),
+                localString: appointmentDate.toLocaleDateString('he-IL')
+            })
+
             const body = {
                 barberId: selectedBarber._id,
                 serviceId: selectedService._id,
-                date: new Date(selectedDate).toISOString(),
+                date: appointmentDate.toISOString(),
                 startTime: selectedSlot.startTime,
                 notes,
             }
