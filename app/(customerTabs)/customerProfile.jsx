@@ -1,4 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { router, useFocusEffect } from 'expo-router'
 import React, { useState } from 'react'
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
@@ -6,10 +7,12 @@ import config from '../../config'
 import apiClient from '../../lib/apiClient'
 import tokenManager from '../../lib/tokenManager'
 import ImageUploader from '../components/ImageUploader'
+import SafeScreen from '../components/SafeScreen'
 
 export default function CustomerProfile() {
     const [loading, setLoading] = useState(false)
     const [user, setUser] = useState(null)
+    const tabBarHeight = useBottomTabBarHeight();
 
     const fetchMe = React.useCallback(async () => {
         setLoading(true)
@@ -107,78 +110,79 @@ export default function CustomerProfile() {
     }
 
     return (
-        <ScrollView contentContainerStyle={styles.container}>
-            <View style={styles.header}>
-                <ImageUploader
-                    currentImage={user?.profileImageData.url}
-                    onImageUploaded={handleImageUploaded}
-                    size={96}
-                    showOverlay={false}
-                    fileFieldName="profileImage"
-                    uploadEndpoint="/users/upload-profile-image"
-                    placeholderText="הוסף תמונת פרופיל"
-                />
-                <Text style={styles.name}>{fullName()}</Text>
-                {!!user?.email && <Text style={styles.email}>{user.email}</Text>}
-            </View>
+        <SafeScreen paddingTop={-5} backgroundColor="#f8fafc">
+            <ScrollView contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 16 }]}>
+                <View style={styles.header}>
+                    <ImageUploader
+                        currentImage={user?.profileImageData.url}
+                        onImageUploaded={handleImageUploaded}
+                        size={96}
+                        showOverlay={false}
+                        fileFieldName="profileImage"
+                        uploadEndpoint="/users/upload-profile-image"
+                        placeholderText="הוסף תמונת פרופיל"
+                    />
+                    <Text style={styles.name}>{fullName()}</Text>
+                    {!!user?.email && <Text style={styles.email}>{user.email}</Text>}
+                </View>
 
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>הפרופיל שלי</Text>
-                <Row
-                    icon="account-edit"
-                    title="עריכת פרטים"
-                    subtitle="שם, אימייל, תמונה"
-                    onPress={() => router.push("/editProfile")} />
-                <Row
-                    icon="shield-lock"
-                    title="אבטחה"
-                    subtitle="סיסמה, אימות ועוד"
-                    onPress={() => router.push("/security")} />
-                <Row
-                    icon="bell"
-                    title="הגדרות הודעות"
-                    subtitle="נהל את ההודעות והתראות"
-                    onPress={() => router.push("/notificationSettings")} />
-            </View>
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>הפרופיל שלי</Text>
+                    <Row
+                        icon="account-edit"
+                        title="עריכת פרטים"
+                        subtitle="שם, אימייל, תמונה"
+                        onPress={() => router.push("/editProfile")} />
+                    <Row
+                        icon="shield-lock"
+                        title="אבטחה"
+                        subtitle="סיסמה, אימות ועוד"
+                        onPress={() => router.push("/security")} />
+                    <Row
+                        icon="bell"
+                        title="הגדרות הודעות"
+                        subtitle="נהל את ההודעות והתראות"
+                        onPress={() => router.push("/notificationSettings")} />
+                </View>
 
-            <View style={styles.section}>
-                <Text style={styles.sectionTitle}>פעולות</Text>
-                <Row
-                    icon="calendar-clock"
-                    title="התורים שלי"
-                    subtitle="צפה בתורים עתידיים"
-                    onPress={() => router.push("/myAppointments")} />
-                <Row
-                    icon="scissors-cutting"
-                    title="היסטוריית תספורות"
-                    subtitle="צפה בכל התורים הקודמים"
-                    onPress={() => router.push("/haircutHistory")} />
-                <Row
-                    icon="help-circle"
-                    title="עזרה ותמיכה"
-                    subtitle="צור קשר עם בעל העסק"
-                    onPress={() => router.push("/help")} />
-                <Row
-                    icon="logout"
-                    title="התנתקות"
-                    subtitle="חזרה לדף ההתחברות"
-                    danger
-                    onPress={onLogout} />
-            </View>
-        </ScrollView>
+                <View style={styles.section}>
+                    <Text style={styles.sectionTitle}>פעולות</Text>
+                    <Row
+                        icon="calendar-clock"
+                        title="התורים שלי"
+                        subtitle="צפה בתורים עתידיים"
+                        onPress={() => router.push("/myAppointments")} />
+                    <Row
+                        icon="scissors-cutting"
+                        title="היסטוריית תספורות"
+                        subtitle="צפה בכל התורים הקודמים"
+                        onPress={() => router.push("/haircutHistory")} />
+                    <Row
+                        icon="help-circle"
+                        title="עזרה ותמיכה"
+                        subtitle="צור קשר עם בעל העסק"
+                        onPress={() => router.push("/help")} />
+                    <Row
+                        icon="logout"
+                        title="התנתקות"
+                        subtitle="חזרה לדף ההתחברות"
+                        danger
+                        onPress={onLogout} />
+                </View>
+            </ScrollView>
+        </SafeScreen>
     )
 }
 
 const styles = StyleSheet.create({
     container: {
-        padding: 16,
         gap: 16,
         backgroundColor: '#f8fafc'
     },
     header: {
         alignItems: 'center',
         gap: 8,
-        paddingVertical: 24,
+        paddingVertical: 20,
         backgroundColor: '#fff',
         borderRadius: 16,
         borderWidth: 1,

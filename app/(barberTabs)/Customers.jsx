@@ -13,6 +13,7 @@ import {
     TouchableOpacity,
     View
 } from 'react-native'
+import config from '../../config'
 import apiClient from '../../lib/apiClient'
 import SafeScreen from '../components/SafeScreen'
 
@@ -35,11 +36,11 @@ export default function Customers() {
     const loadCustomers = async () => {
         try {
             setLoading(true)
-            const response = await apiClient.get('/barber/my-customers')
+            const response = await apiClient.get(`${config.BASE_URL}/appointments/barber/customers?type=all`)
             if (response.ok) {
                 const data = await response.json()
                 setCustomers(data.customers || [])
-                console.log('Customers loaded:', data.customers)
+                console.log('Customers loaded:', data)
             } else {
                 Alert.alert('שגיאה', 'לא ניתן לטעון את רשימת הלקוחות')
             }
@@ -60,13 +61,13 @@ export default function Customers() {
     const filterCustomers = React.useCallback(() => {
         let filtered = customers
 
-        // פילטר לפי סטטוס
+        // פילטר לפי סטטוס (כרגע כל הלקוחות פעילים)
         if (filterStatus !== 'all') {
-            filtered = filtered.filter(customer => {
+            filtered = filtered.filter(appointment => {
                 if (filterStatus === 'active') {
-                    return customer.isActive === true
+                    return true // כל הלקוחות פעילים כרגע
                 } else if (filterStatus === 'inactive') {
-                    return customer.isActive === false
+                    return false // אין לקוחות לא פעילים כרגע
                 }
                 return true
             })
@@ -74,92 +75,132 @@ export default function Customers() {
 
         // פילטר לפי חיפוש טקסט
         if (searchText.trim()) {
-            filtered = filtered.filter(customer =>
-                customer.name?.toLowerCase().includes(searchText.toLowerCase()) ||
-                customer.phone?.includes(searchText) ||
-                customer.email?.toLowerCase().includes(searchText.toLowerCase())
-            )
+            filtered = filtered.filter(appointment => {
+                const customer = appointment.customer
+                const customerName = `${customer.firstName} ${customer.lastName}`
+                return customerName?.toLowerCase().includes(searchText.toLowerCase()) ||
+                    customer.phone?.includes(searchText) ||
+                    customer.email?.toLowerCase().includes(searchText.toLowerCase())
+            })
         }
 
         setFilteredCustomers(filtered)
     }, [customers, searchText, filterStatus])
 
     const openWhatsApp = (phoneNumber) => {
-        const cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
-        const whatsappUrl = `whatsapp://send?phone=${cleanPhone}`
+        let cleanPhone = phoneNumber.replace(/[^0-9]/g, '')
 
-        Linking.canOpenURL(whatsappUrl)
-            .then((supported) => {
-                if (supported) {
-                    return Linking.openURL(whatsappUrl)
+        // הוסף קידומת ישראל אם לא קיימת
+        if (cleanPhone.startsWith('0')) {
+            cleanPhone = '972' + cleanPhone.substring(1)
+        } else if (!cleanPhone.startsWith('972')) {
+            cleanPhone = '972' + cleanPhone
+        }
+
+        // נסה מספר אפשרויות לפתיחת WhatsApp
+        const whatsappUrls = [
+            `whatsapp://send?phone=${cleanPhone}`,
+            `https://wa.me/${cleanPhone}`,
+            `https://api.whatsapp.com/send?phone=${cleanPhone}`
+        ]
+
+        const tryOpenWhatsApp = async (urls, index = 0) => {
+            if (index >= urls.length) {
+                Alert.alert('שגיאה', 'לא ניתן לפתוח את WhatsApp. אנא התקין את האפליקציה או נסה לשלוח הודעה ידנית.')
+                return
+            }
+
+            try {
+                const canOpen = await Linking.canOpenURL(urls[index])
+                if (canOpen) {
+                    await Linking.openURL(urls[index])
                 } else {
-                    Alert.alert('שגיאה', 'WhatsApp לא מותקן במכשיר')
+                    // נסה את האפשרות הבאה
+                    tryOpenWhatsApp(urls, index + 1)
                 }
-            })
-            .catch((err) => {
-                console.error('Error opening WhatsApp:', err)
-                Alert.alert('שגיאה', 'לא ניתן לפתוח את WhatsApp')
-            })
+            } catch (error) {
+                console.error('Error opening WhatsApp:', error)
+                // נסה את האפשרות הבאה
+                tryOpenWhatsApp(urls, index + 1)
+            }
+        }
+
+        tryOpenWhatsApp(whatsappUrls)
     }
 
-    const viewCustomerDetails = (customer) => {
+    const viewCustomerHistory = (customerData) => {
+        const customer = customerData.customer
         router.push({
-            pathname: '/CustomerDetails',
-            params: { customerId: customer.id }
+            pathname: '/customerHaircuts',
+            params: {
+                customerId: customer._id,
+                customerName: `${customer.firstName} ${customer.lastName}`,
+                customerPhone: customer.phone,
+                appointmentsData: JSON.stringify(customerData.appointments || [])
+            }
         })
     }
 
-    const renderCustomerItem = ({ item: customer }) => (
-        <View style={styles.customerCard}>
-            <View style={styles.customerInfo}>
-                <View style={styles.customerHeader}>
-                    <Text style={styles.customerName}>{customer.name}</Text>
-                    <View style={styles.statusBadge}>
-                        <Text style={styles.statusText}>
-                            {customer.isActive ? 'פעיל' : 'לא פעיל'}
-                        </Text>
-                    </View>
-                </View>
+    const renderCustomerItem = ({ item: customerData }) => {
+        const customer = customerData.customer
+        const customerName = `${customer.firstName} ${customer.lastName}`
+        const appointmentsCount = customerData.appointments?.length || 0
 
-                <View style={styles.customerDetails}>
-                    <View style={styles.detailRow}>
-                        <MaterialCommunityIcons name="phone" size={16} color="#6b7280" />
-                        <Text style={styles.detailText}>{customer.phone}</Text>
-                    </View>
-
-                    {customer.email && (
-                        <View style={styles.detailRow}>
-                            <MaterialCommunityIcons name="email" size={16} color="#6b7280" />
-                            <Text style={styles.detailText}>{customer.email}</Text>
+        return (
+            <TouchableOpacity
+                style={styles.customerCard}
+                onPress={() => viewCustomerHistory(customerData)}
+            >
+                <View style={styles.customerInfo}>
+                    <View style={styles.customerHeader}>
+                        <View style={styles.statusBadge}>
+                            <Text style={styles.statusText}>
+                                פעיל
+                            </Text>
                         </View>
-                    )}
+                        <Text style={styles.customerName}>{customerName}</Text>
+                    </View>
 
-                    <View style={styles.detailRow}>
-                        <MaterialCommunityIcons name="calendar" size={16} color="#6b7280" />
-                        <Text style={styles.detailText}>
-                            {customer.appointmentsCount || 0} תורים
-                        </Text>
+                    <View style={styles.customerDetails}>
+                        <View style={styles.detailRow}>
+                            <MaterialCommunityIcons name="phone" size={16} color="#6b7280" />
+                            <Text style={styles.detailText}>{customer.phone}</Text>
+                        </View>
+
+                        {customer.email && (
+                            <View style={styles.detailRow}>
+                                <MaterialCommunityIcons name="email" size={16} color="#6b7280" />
+                                <Text style={styles.detailText}>{customer.email}</Text>
+                            </View>
+                        )}
+
+                        <View style={styles.detailRow}>
+                            <MaterialCommunityIcons name="calendar" size={16} color="#6b7280" />
+                            <Text style={styles.detailText}>
+                                {appointmentsCount} תורים
+                            </Text>
+                        </View>
                     </View>
                 </View>
-            </View>
 
-            <View style={styles.actionButtons}>
-                <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => viewCustomerDetails(customer)}
-                >
-                    <MaterialCommunityIcons name="eye" size={20} color="#3b82f6" />
-                </TouchableOpacity>
+                <View style={styles.actionButtons}>
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => viewCustomerHistory(customerData)}
+                    >
+                        <MaterialCommunityIcons name="history" size={20} color="#3b82f6" />
+                    </TouchableOpacity>
 
-                <TouchableOpacity
-                    style={styles.actionButton}
-                    onPress={() => openWhatsApp(customer.phone)}
-                >
-                    <MaterialCommunityIcons name="whatsapp" size={20} color="#25d366" />
-                </TouchableOpacity>
-            </View>
-        </View>
-    )
+                    <TouchableOpacity
+                        style={styles.actionButton}
+                        onPress={() => openWhatsApp(customer.phone)}
+                    >
+                        <MaterialCommunityIcons name="whatsapp" size={20} color="#25d366" />
+                    </TouchableOpacity>
+                </View>
+            </TouchableOpacity>
+        )
+    }
 
     if (loading) {
         return (
@@ -236,7 +277,7 @@ export default function Customers() {
                     </View>
                     <View style={styles.statItem}>
                         <Text style={styles.statNumber}>
-                            {filteredCustomers.reduce((sum, customer) => sum + (customer.appointmentsCount || 0), 0)}
+                            {filteredCustomers.reduce((sum, customerData) => sum + (customerData.appointments?.length || 0), 0)}
                         </Text>
                         <Text style={styles.statLabel}>תורים בסך הכל</Text>
                     </View>
@@ -245,7 +286,7 @@ export default function Customers() {
                 <FlatList
                     data={filteredCustomers}
                     renderItem={renderCustomerItem}
-                    keyExtractor={(item) => item.id.toString()}
+                    keyExtractor={(item) => item.customer._id.toString()}
                     refreshControl={
                         <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
                     }
@@ -386,7 +427,15 @@ const styles = StyleSheet.create({
         borderWidth: 1,
         borderColor: '#e5e7eb',
         flexDirection: 'row',
-        alignItems: 'center'
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 1,
+        },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
     },
     customerInfo: {
         flex: 1
@@ -408,7 +457,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#10b981',
         paddingHorizontal: 8,
         paddingVertical: 4,
-        borderRadius: 6
+        borderRadius: 6,
+        marginRight: 8
     },
     statusText: {
         fontSize: 12,
@@ -431,7 +481,8 @@ const styles = StyleSheet.create({
     },
     actionButtons: {
         flexDirection: 'row',
-        gap: 8
+        gap: 8,
+        marginLeft: 8
     },
     actionButton: {
         width: 40,
@@ -439,7 +490,7 @@ const styles = StyleSheet.create({
         borderRadius: 20,
         backgroundColor: '#f3f4f6',
         justifyContent: 'center',
-        alignItems: 'center'
+        alignItems: 'center',
     },
     emptyContainer: {
         alignItems: 'center',

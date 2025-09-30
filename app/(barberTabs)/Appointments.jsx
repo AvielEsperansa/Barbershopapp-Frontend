@@ -80,15 +80,25 @@ export default function Appointments() {
         try {
             console.log(`🌐 Fetching appointments for type: ${type}, barber: ${barberId}`)
             setAppointmentsLoading(true)
-            const response = await apiClient.get(`${config.BASE_URL}/appointments/barber/${barberId}/customers?type=${type}`)
+            const response = await apiClient.get(`${config.BASE_URL}/appointments/barber/customers?type=${type}`)
             console.log(`📡 API Response status: ${response.status}`)
 
             if (response.ok) {
                 const data = await response.json()
                 console.log(`✅ API Response data:`, data)
-                const appointments = data.appointments || []
-                console.log(`📋 Appointments count: ${appointments.length}`)
-                return appointments
+
+                // חלץ את כל התורים מהמבנה החדש
+                let allAppointments = []
+                if (data.customers && Array.isArray(data.customers)) {
+                    data.customers.forEach(customerData => {
+                        if (customerData.appointments && Array.isArray(customerData.appointments)) {
+                            allAppointments = allAppointments.concat(customerData.appointments)
+                        }
+                    })
+                }
+
+                console.log(`📋 Extracted appointments: ${allAppointments.length}`)
+                return allAppointments
             } else {
                 console.error('❌ Error loading appointments:', response.status)
                 return []
@@ -260,6 +270,90 @@ export default function Appointments() {
     const [loadingAvailableTimes, setLoadingAvailableTimes] = useState(false)
     const [showPastDayOffs, setShowPastDayOffs] = useState(false)
 
+    // State for specific day override of working hours
+    const [showOverrideModal, setShowOverrideModal] = useState(false)
+    const [overrideDate, setOverrideDate] = useState(new Date())
+    const [showOverrideDatePicker, setShowOverrideDatePicker] = useState(false)
+    const [overrideIsWorking, setOverrideIsWorking] = useState(true)
+    const [overrideStartTime, setOverrideStartTime] = useState('09:00')
+    const [overrideEndTime, setOverrideEndTime] = useState('17:00')
+    const [overrideBreakStartTime, setOverrideBreakStartTime] = useState('12:00')
+    const [overrideBreakEndTime, setOverrideBreakEndTime] = useState('13:00')
+    const [showOverrideStartPicker, setShowOverrideStartPicker] = useState(false)
+    const [showOverrideEndPicker, setShowOverrideEndPicker] = useState(false)
+    const [showOverrideBreakStartPicker, setShowOverrideBreakStartPicker] = useState(false)
+    const [showOverrideBreakEndPicker, setShowOverrideBreakEndPicker] = useState(false)
+    const [savingOverride, setSavingOverride] = useState(false)
+
+    const onOverrideTimePicked = (setter, close) => (event, selectedTime) => {
+        close(false)
+        if (selectedTime) {
+            const timeString = selectedTime.toTimeString().substring(0, 5)
+            setter(timeString)
+        }
+    }
+
+    const onOverrideDatePicked = (event, selectedDate) => {
+        setShowOverrideDatePicker(false)
+        if (selectedDate) {
+            // Normalize to local date without time offset when sending later
+            setOverrideDate(selectedDate)
+        }
+    }
+
+    const saveSpecificDayOverride = async () => {
+        try {
+            if (!barberId) {
+                Alert.alert('שגיאה', 'לא נמצא מזהה ספר')
+                return
+            }
+            if (overrideIsWorking && overrideStartTime >= overrideEndTime) {
+                Alert.alert('שגיאה', 'שעת הסיום חייבת להיות אחרי שעת ההתחלה')
+                return
+            }
+
+            setSavingOverride(true)
+
+            const dateString = overrideDate.toISOString().split('T')[0]
+            const dayOfWeek = overrideDate.getDay()
+
+            // אותה לוגיקה כמו saveWorkingHours: שולחים מערך בשם workingHours
+            const workingHoursArray = [
+                {
+                    dayOfWeek,
+                    date: dateString,
+                    isWorking: overrideIsWorking,
+                    startTime: overrideIsWorking ? overrideStartTime : null,
+                    endTime: overrideIsWorking ? overrideEndTime : null,
+                    breakStartTime: overrideIsWorking ? overrideBreakStartTime : null,
+                    breakEndTime: overrideIsWorking ? overrideBreakEndTime : null
+                }
+            ]
+
+            const response = await apiClient.post(`${config.BASE_URL}/working-hours/barber/${barberId}`, {
+                workingHours: workingHoursArray
+            })
+            if (response.ok) {
+                Alert.alert('הצלחה', 'שעות העבודה ליום הנבחר נשמרו')
+                setShowOverrideModal(false)
+                // רענון שעות העבודה לאחר שמירה
+                loadWorkingHours()
+            } else {
+                let message = 'לא ניתן לשמור את שינוי שעות היום'
+                try {
+                    const err = await response.json()
+                    message = err.error || message
+                } catch { }
+                Alert.alert('שגיאה', message)
+            }
+        } catch (error) {
+            console.error('Error saving specific day override:', error)
+            Alert.alert('שגיאה', 'אירעה שגיאה בעת שמירת שינוי שעות היום')
+        } finally {
+            setSavingOverride(false)
+        }
+    }
+
     // פונקציה לסינון ימי חופש
     const getFilteredDayOffs = useCallback(() => {
         if (showPastDayOffs) {
@@ -278,26 +372,71 @@ export default function Appointments() {
     // פונקציות עזר לעיבוד התורים
     const loadTodayAppointments = useCallback(async () => {
         const appointments = await loadAppointmentsByType('today')
-        setTodayAppointments(appointments)
+
+        // מיין את התורים של היום לפי שעת התחלה
+        const sortedAppointments = appointments.sort((a, b) => {
+            const timeA = a.startTime || '00:00'
+            const timeB = b.startTime || '00:00'
+            return timeA.localeCompare(timeB)
+        })
+
+
+
+        setTodayAppointments(sortedAppointments)
     }, [loadAppointmentsByType])
 
     const loadFutureAppointments = useCallback(async () => {
         console.log('🔄 Loading future appointments...')
-        const today = new Date().toISOString().split('T')[0]
-        console.log('📅 Today date:', today)
 
-        const appointments = await loadAppointmentsByType('future')
-        console.log('📋 All future appointments from API:', appointments?.length || 0)
+        // יצור תאריך של היום בצורה יותר מדויקת
+        const today = new Date()
+        const todayString = today.toISOString().split('T')[0]
+        console.log('📅 Today date:', todayString)
+        console.log('📅 Today full date:', today.toISOString())
+
+        // בדיקה נוספת - תאריך מקומי
+        const localToday = new Date().toLocaleDateString('en-CA') // YYYY-MM-DD format
+        console.log('📅 Local today:', localToday)
+
+        // קבל את כל התורים (לא רק future) כדי שנוכל לסנן בצד הלקוח
+        const appointments = await loadAppointmentsByType('all')
+        console.log('📋 All appointments from API:', appointments?.length || 0)
 
         const futureApps = appointments.filter(appointment => {
-            const appointmentDate = new Date(appointment.date).toISOString().split('T')[0]
-            const isFuture = appointmentDate > today
-            console.log(`📅 Appointment ${appointment._id}: ${appointmentDate} > ${today} = ${isFuture}`)
-            return isFuture
+            // המר את תאריך התור לתאריך JavaScript
+            const appointmentDate = new Date(appointment.date)
+            const appointmentDateString = appointmentDate.toISOString().split('T')[0]
+
+            // בדוק אם התור הוא מחר או אחר כך
+            const isFuture = appointmentDateString > localToday
+
+            // בדיקה נוספת - אולי התאריך מגיע בפורמט שונה
+            const appointmentDateOnly = appointment.date.split('T')[0]
+            const isFutureAlt = appointmentDateOnly > localToday
+
+
+            return isFuture || isFutureAlt
         })
 
         console.log('🎯 Filtered future appointments:', futureApps.length)
-        console.log('📋 Future appointments details:', futureApps.map(apt => ({
+
+        // מיין את התורים העתידיים לפי תאריך ואז לפי שעה
+        const sortedFutureApps = futureApps.sort((a, b) => {
+            // קודם לפי תאריך
+            const dateA = new Date(a.date)
+            const dateB = new Date(b.date)
+
+            if (dateA.getTime() !== dateB.getTime()) {
+                return dateA.getTime() - dateB.getTime()
+            }
+
+            // אם אותו תאריך, מיין לפי שעה
+            const timeA = a.startTime || '00:00'
+            const timeB = b.startTime || '00:00'
+            return timeA.localeCompare(timeB)
+        })
+
+        console.log('📋 Future appointments details (sorted):', sortedFutureApps.map(apt => ({
             id: apt._id,
             date: apt.date,
             time: apt.startTime,
@@ -305,7 +444,7 @@ export default function Appointments() {
             fullAppointment: apt // לוג של כל התור
         })))
 
-        setFutureAppointments(futureApps)
+        setFutureAppointments(sortedFutureApps)
     }, [loadAppointmentsByType])
 
     // פונקציות לשינוי שעת התור
@@ -659,7 +798,18 @@ export default function Appointments() {
                     {activeTab === 'workingHours' && (
                         <View style={styles.tabContent}>
                             <View style={styles.section}>
-                                <Text style={styles.sectionTitle}>שעות עבודה שבועיות</Text>
+                                <View style={styles.sectionHeader}>
+                                    <Text style={styles.sectionTitle}>שעות עבודה שבועיות</Text>
+                                    <View style={styles.headerButtons}>
+                                        <Pressable
+                                            style={styles.addButton}
+                                            onPress={() => setShowOverrideModal(true)}
+                                        >
+                                            <MaterialCommunityIcons name="calendar-edit" size={16} color="#ffffff" />
+                                            <Text style={styles.addButtonText}>שנה יום ספציפי</Text>
+                                        </Pressable>
+                                    </View>
+                                </View>
 
                                 {workingHoursLoading ? (
                                     <View style={styles.loadingState}>
@@ -949,6 +1099,139 @@ export default function Appointments() {
                             >
                                 <Text style={styles.confirmModalButtonText}>שנה שעה</Text>
                             </TouchableOpacity>
+                        </View>
+                    </View>
+                </View>
+            </Modal>
+
+            {/* מודל לשינוי שעות ליום ספציפי */}
+            <Modal
+                visible={showOverrideModal}
+                transparent={true}
+                animationType="slide"
+                onRequestClose={() => setShowOverrideModal(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>שינוי שעות ליום מסוים</Text>
+                            <TouchableOpacity onPress={() => setShowOverrideModal(false)} style={styles.modalCloseButton}>
+                                <MaterialCommunityIcons name="close" size={24} color="#6b7280" />
+                            </TouchableOpacity>
+                        </View>
+
+                        <View style={{ gap: 12 }}>
+                            <View style={{ gap: 8 }}>
+                                <Text style={styles.timeSelectionTitle}>בחר תאריך</Text>
+                                <Pressable
+                                    style={styles.timeButton}
+                                    onPress={() => setShowOverrideDatePicker(true)}
+                                >
+                                    <MaterialCommunityIcons name="calendar" size={16} color="#6b7280" />
+                                    <Text style={styles.timeButtonText}>{overrideDate.toLocaleDateString('he-IL')}</Text>
+                                </Pressable>
+                                {showOverrideDatePicker && (
+                                    <DateTimePicker
+                                        value={overrideDate}
+                                        mode="date"
+                                        display="default"
+                                        onChange={onOverrideDatePicked}
+                                        minimumDate={new Date()}
+                                    />
+                                )}
+                            </View>
+
+                            <View style={{ flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' }}>
+                                <Text style={styles.timeLabel}>עובד ביום זה?</Text>
+                                <Switch
+                                    value={overrideIsWorking}
+                                    onValueChange={setOverrideIsWorking}
+                                    trackColor={{ false: '#e5e7eb', true: '#3b82f6' }}
+                                    thumbColor={overrideIsWorking ? '#ffffff' : '#f3f4f6'}
+                                />
+                            </View>
+
+                            {overrideIsWorking && (
+                                <View style={styles.timeInputs}>
+                                    <View style={styles.timeRow}>
+                                        <Text style={styles.timeLabel}>שעת התחלה:</Text>
+                                        <Pressable style={styles.timeButton} onPress={() => setShowOverrideStartPicker(true)}>
+                                            <Text style={styles.timeButtonText}>{overrideStartTime}</Text>
+                                            <MaterialCommunityIcons name="clock-outline" size={16} color="#6b7280" />
+                                        </Pressable>
+                                    </View>
+                                    <View style={styles.timeRow}>
+                                        <Text style={styles.timeLabel}>שעת סיום:</Text>
+                                        <Pressable style={styles.timeButton} onPress={() => setShowOverrideEndPicker(true)}>
+                                            <Text style={styles.timeButtonText}>{overrideEndTime}</Text>
+                                            <MaterialCommunityIcons name="clock-outline" size={16} color="#6b7280" />
+                                        </Pressable>
+                                    </View>
+                                    <View style={styles.timeRow}>
+                                        <Text style={styles.timeLabel}>הפסקה מ:</Text>
+                                        <Pressable style={styles.timeButton} onPress={() => setShowOverrideBreakStartPicker(true)}>
+                                            <Text style={styles.timeButtonText}>{overrideBreakStartTime}</Text>
+                                            <MaterialCommunityIcons name="clock-outline" size={16} color="#6b7280" />
+                                        </Pressable>
+                                    </View>
+                                    <View style={styles.timeRow}>
+                                        <Text style={styles.timeLabel}>הפסקה עד:</Text>
+                                        <Pressable style={styles.timeButton} onPress={() => setShowOverrideBreakEndPicker(true)}>
+                                            <Text style={styles.timeButtonText}>{overrideBreakEndTime}</Text>
+                                            <MaterialCommunityIcons name="clock-outline" size={16} color="#6b7280" />
+                                        </Pressable>
+                                    </View>
+                                </View>
+                            )}
+
+                            {showOverrideStartPicker && (
+                                <DateTimePicker
+                                    value={getTimeFromString(overrideStartTime)}
+                                    mode="time"
+                                    display="spinner"
+                                    onChange={onOverrideTimePicked(setOverrideStartTime, setShowOverrideStartPicker)}
+                                />
+                            )}
+                            {showOverrideEndPicker && (
+                                <DateTimePicker
+                                    value={getTimeFromString(overrideEndTime)}
+                                    mode="time"
+                                    display="spinner"
+                                    onChange={onOverrideTimePicked(setOverrideEndTime, setShowOverrideEndPicker)}
+                                />
+                            )}
+                            {showOverrideBreakStartPicker && (
+                                <DateTimePicker
+                                    value={getTimeFromString(overrideBreakStartTime)}
+                                    mode="time"
+                                    display="spinner"
+                                    onChange={onOverrideTimePicked(setOverrideBreakStartTime, setShowOverrideBreakStartPicker)}
+                                />
+                            )}
+                            {showOverrideBreakEndPicker && (
+                                <DateTimePicker
+                                    value={getTimeFromString(overrideBreakEndTime)}
+                                    mode="time"
+                                    display="spinner"
+                                    onChange={onOverrideTimePicked(setOverrideBreakEndTime, setShowOverrideBreakEndPicker)}
+                                />
+                            )}
+
+                            <View style={styles.modalActions}>
+                                <TouchableOpacity
+                                    style={[styles.modalButton, styles.cancelModalButton]}
+                                    onPress={() => setShowOverrideModal(false)}
+                                >
+                                    <Text style={styles.cancelModalButtonText}>ביטול</Text>
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                    style={[styles.modalButton, styles.confirmModalButton, savingOverride && styles.disabledButton]}
+                                    onPress={saveSpecificDayOverride}
+                                    disabled={savingOverride}
+                                >
+                                    <Text style={styles.confirmModalButtonText}>{savingOverride ? 'שומר...' : 'שמור'}</Text>
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     </View>
                 </View>
