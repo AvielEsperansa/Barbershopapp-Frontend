@@ -1,6 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import React, { useEffect, useState } from 'react'
 import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, View } from 'react-native'
+// import config from '../config'
+// import apiClient from '../lib/apiClient'
 import notificationManager from '../lib/notificationManager'
 import SafeScreen from './components/SafeScreen'
 
@@ -12,12 +14,27 @@ export default function NotificationSettings() {
         dayOffs: true,
         promotions: false,
     })
+    // const [loading, setLoading] = useState(false)
 
     const [scheduledNotifications, setScheduledNotifications] = useState([])
 
     useEffect(() => {
         loadScheduledNotifications()
+        loadNotificationPreferences()
     }, [])
+
+    const loadNotificationPreferences = async () => {
+        try {
+            // TODO: טעינת העדפות מהשרת
+            // const response = await apiClient.get(`${config.BASE_URL}/users/notification-preferences`)
+            // if (response.ok) {
+            //     const data = await response.json()
+            //     setNotifications(data.preferences)
+            // }
+        } catch (error) {
+            console.log('Failed to load notification preferences:', error)
+        }
+    }
 
     const loadScheduledNotifications = async () => {
         try {
@@ -28,11 +45,32 @@ export default function NotificationSettings() {
         }
     }
 
-    const toggleNotification = (type) => {
+    const toggleNotification = async (type) => {
+        const newValue = !notifications[type]
         setNotifications(prev => ({
             ...prev,
-            [type]: !prev[type]
+            [type]: newValue
         }))
+
+        // שמירת ההעדפה בשרת
+        await saveNotificationPreference(type, newValue)
+    }
+
+    const saveNotificationPreference = async (type, value) => {
+        try {
+            // TODO: שמירת העדפה בשרת
+            // const response = await apiClient.put(`${config.BASE_URL}/users/notification-preferences`, {
+            //     [type]: value
+            // })
+            // if (response.ok) {
+            //     console.log('Notification preference saved:', type, value)
+            // } else {
+            //     console.log('Failed to save notification preference')
+            // }
+            console.log('Notification preference changed:', type, value)
+        } catch (error) {
+            console.log('Error saving notification preference:', error)
+        }
     }
 
     const sendTestNotification = async () => {

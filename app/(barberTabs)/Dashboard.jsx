@@ -14,6 +14,7 @@ export default function Dashboard() {
     const [markedDates, setMarkedDates] = useState({})
     const [selectedDate, setSelectedDate] = useState('')
     const [showDayModal, setShowDayModal] = useState(false)
+    const [ratingStats, setRatingStats] = useState(null)
 
     useEffect(() => {
         const loadProfile = async () => {
@@ -27,6 +28,22 @@ export default function Dashboard() {
         }
         loadProfile()
     }, [])
+
+    useEffect(() => {
+        const loadRatingStats = async () => {
+            if (!barberId) return
+            try {
+                const response = await apiClient.get(`${config.BASE_URL}/ratings/barber/${barberId}/stats`)
+                if (response.ok) {
+                    const data = await response.json()
+                    setRatingStats(data.stats || data)
+                }
+            } catch (error) {
+                console.error('Error loading rating stats:', error)
+            }
+        }
+        loadRatingStats()
+    }, [barberId])
 
     useEffect(() => {
         const loadAppointments = async () => {
@@ -90,21 +107,26 @@ export default function Dashboard() {
 
                 <View style={styles.statsContainer}>
                     <View style={styles.statCard}>
-                        <MaterialCommunityIcons name="calendar-check" size={20} color="#10b981" />
+                        <MaterialCommunityIcons name="calendar-check" size={32} color="#10b981" />
                         <Text style={styles.statNumber}>{todaysAppointments.length}</Text>
                         <Text style={styles.statLabel}>תורים היום</Text>
                     </View>
 
                     <View style={styles.statCard}>
-                        <MaterialCommunityIcons name="clock-outline" size={32} color="#f59e0b" />
+                        <MaterialCommunityIcons name="clock-outline" size={32} color="#3b82f6" />
                         <Text style={styles.statNumber}>3</Text>
                         <Text style={styles.statLabel}>ממתינים</Text>
                     </View>
 
                     <View style={styles.statCard}>
-                        <MaterialCommunityIcons name="star" size={32} color="#8b5cf6" />
-                        <Text style={styles.statNumber}>4.8</Text>
+                        <MaterialCommunityIcons name="star" size={32} color="#f59e0b" />
+                        <Text style={styles.statNumber}>
+                            {ratingStats?.averageRating ? ratingStats.averageRating.toFixed(1) : '0.0'}
+                        </Text>
                         <Text style={styles.statLabel}>דירוג ממוצע</Text>
+                        {ratingStats?.totalRatings && (
+                            <Text style={styles.ratingCount}>({ratingStats.totalRatings} דירוגים)</Text>
+                        )}
                     </View>
                 </View>
 
@@ -125,10 +147,13 @@ export default function Dashboard() {
                         <Text style={styles.actionText}>צפה בלקוחות</Text>
                     </TouchableOpacity>
 
-                    <View style={styles.actionCard}>
+                    <TouchableOpacity
+                        style={styles.actionCard}
+                        onPress={() => router.push('/barberReports')}
+                    >
                         <MaterialCommunityIcons name="chart-line" size={24} color="#f59e0b" />
                         <Text style={styles.actionText}>דוחות וסטטיסטיקות</Text>
-                    </View>
+                    </TouchableOpacity>
                 </View>
 
                 <View style={{ paddingHorizontal: 16, marginTop: 16 }}>
@@ -346,6 +371,12 @@ const styles = StyleSheet.create({
         fontSize: 14,
         color: '#6b7280',
         textAlign: 'center'
+    },
+    ratingCount: {
+        fontSize: 10,
+        color: '#9ca3af',
+        textAlign: 'center',
+        marginTop: 2
     },
     quickActions: {
         paddingHorizontal: 16

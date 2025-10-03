@@ -167,7 +167,7 @@ export default function BarberProfile() {
                         icon="star"
                         title="דירוגים"
                         subtitle="צפה בביקורות לקוחות"
-                        onPress={() => { }} />
+                        onPress={() => router.push("/barberRatings")} />
                 </View>
 
                 {/* Actions Section */}

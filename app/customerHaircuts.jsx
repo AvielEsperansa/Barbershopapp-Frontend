@@ -17,7 +17,7 @@ import apiClient from '../lib/apiClient'
 import SafeScreen from './components/SafeScreen'
 
 export default function CustomerHaircuts() {
-    const { customerId, customerName, customerPhone, appointmentsData } = useLocalSearchParams()
+    const { customerId, customerName, appointmentsData } = useLocalSearchParams()
     const [appointments, setAppointments] = useState([])
     const [filteredAppointments, setFilteredAppointments] = useState([])
     const [loading, setLoading] = useState(true)

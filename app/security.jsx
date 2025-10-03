@@ -2,7 +2,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 import AsyncStorage from '@react-native-async-storage/async-storage'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
-import { Alert, Pressable, ScrollView, StyleSheet, Switch, Text, TextInput, View } from 'react-native'
+import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import config from '../config'
 import SafeScreen from './components/SafeScreen'
 
@@ -12,7 +12,6 @@ export default function Security() {
     const [currentPassword, setCurrentPassword] = useState('')
     const [newPassword, setNewPassword] = useState('')
     const [confirmPassword, setConfirmPassword] = useState('')
-    const [notificationsEnabled, setNotificationsEnabled] = useState(true)
 
     const onPasswordChange = async () => {
         if (!currentPassword || !newPassword || !confirmPassword) {
@@ -64,16 +63,6 @@ export default function Security() {
         }
     }
 
-    const onNotificationToggle = async (value) => {
-        setNotificationsEnabled(value)
-        // כאן אפשר להוסיף לוגיקה לשמירת ההעדפה בבקנד
-        try {
-            // await saveNotificationPreference(value)
-            console.log('Notification preference saved:', value)
-        } catch (error) {
-            console.error('Failed to save notification preference:', error)
-        }
-    }
 
     const SecurityRow = ({ icon, title, subtitle, onPress, danger, children }) => (
         <View style={styles.row}>
@@ -148,22 +137,6 @@ export default function Security() {
                     </Pressable>
                 </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>הגדרות</Text>
-
-                    <SecurityRow
-                        icon="bell"
-                        title="התראות"
-                        subtitle="קבל התראות על תורים ועדכונים"
-                    >
-                        <Switch
-                            value={notificationsEnabled}
-                            onValueChange={onNotificationToggle}
-                            trackColor={{ false: '#e5e7eb', true: '#3b82f6' }}
-                            thumbColor={notificationsEnabled ? '#fff' : '#f3f4f6'}
-                        />
-                    </SecurityRow>
-                </View>
             </ScrollView>
         </SafeScreen>
     )
