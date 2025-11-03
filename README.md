@@ -1,50 +1,133 @@
-# Welcome to your Expo app 👋
+# Barbershopapp-Frontend
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A mobile application built with Expo and React Native, providing a platform for barbers and customers to manage appointments, profiles, and services.
 
-## Get started
+## Key Features & Benefits
 
-1. Install dependencies
+*   **User Authentication:** Secure signup and login functionality.
+*   **Dashboard:**  Overview of key information for both barbers and customers.
+*   **Appointment Management:**  Book, view, and manage appointments.
+*   **Profile Management:**  Barbers and customers can update their profile information.
+*   **Push Notifications:** Receive real-time updates and reminders via push notifications.
 
-   ```bash
-   npm install
-   ```
+## Prerequisites & Dependencies
 
-2. Start the app
+Before you begin, ensure you have the following installed:
 
-   ```bash
-   npx expo start
-   ```
+*   **Node.js:**  Version 16 or higher.  Download from [nodejs.org](https://nodejs.org/).
+*   **npm or Yarn:**  Node package manager.  npm is included with Node.js; Yarn can be installed globally via npm: `npm install -g yarn`.
+*   **Expo CLI:**  Install globally using npm: `npm install -g expo-cli`.
+*   **Expo Go App:**  Download the Expo Go app on your iOS or Android device.
+*   **Android Studio or Xcode (Optional):** For running on emulators/simulators or building native binaries.
+*   **@react-native-async-storage/async-storage:** For local storage
+*   **expo-router:** For routing
 
-In the output, you'll find options to open the app in a
+## Installation & Setup Instructions
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+Follow these steps to get the project up and running on your local machine:
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+1.  **Clone the repository:**
 
-## Get a fresh project
+    ```bash
+    git clone https://github.com/AvielEsperansa/Barbershopapp-Frontend.git
+    cd Barbershopapp-Frontend
+    ```
 
-When you're ready, run:
+2.  **Install dependencies:**
 
-```bash
-npm run reset-project
+    ```bash
+    npm install  # or yarn install
+    ```
+
+3.  **Configure API Base URL:**
+
+    *   Open the `config.js` file located in the project root.
+    *   Modify the `BASE_URL` to point to your backend server's address.
+
+        ```javascript
+        // config.js
+        const config = {
+            BASE_URL: 'http://your-backend-server-address:4000'
+        }
+        export default config;
+        ```
+
+4.  **Start the Expo development server:**
+
+    ```bash
+    npx expo start # or yarn expo start
+    ```
+
+    This will open the Expo DevTools in your browser.
+
+5.  **Run the App:**
+
+    *   **Using the Expo Go App:**  Scan the QR code displayed in the Expo DevTools with the Expo Go app on your iOS or Android device.
+    *   **Using an Emulator/Simulator:**  Click on the "Run on Android emulator" or "Run on iOS simulator" option in the Expo DevTools.  Make sure you have Android Studio or Xcode installed and configured correctly.
+
+## Usage Examples & API Documentation
+
+### Setting up environment variables
+The App connects to a backend server, make sure that the Base URL is correct by checking the `config.js` file.
+
+### API Calls
+
+The `lib/apiClient.js` file provides a wrapper for making API calls. It handles token management and automatic refreshing of access tokens.
+
+**Example: Making a GET request**
+
+```javascript
+import ApiClient from './lib/apiClient';
+
+const apiClient = new ApiClient();
+
+async function fetchData() {
+    try {
+        const response = await apiClient.get('/appointments');
+        console.log(response.data);
+    } catch (error) {
+        console.error("Error fetching data:", error);
+    }
+}
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+**Example: Making a POST request**
 
-## Learn more
+```javascript
+import ApiClient from './lib/apiClient';
 
-To learn more about developing your project with Expo, look at the following resources:
+const apiClient = new ApiClient();
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+async function createAppointment(appointmentData) {
+    try {
+        const response = await apiClient.post('/appointments', appointmentData);
+        console.log("Appointment created:", response.data);
+    } catch (error) {
+        console.error("Error creating appointment:", error);
+    }
+}
+```
 
-## Join the community
+## Configuration Options
 
-Join our community of developers creating universal apps.
+*   **`config.js`:**  Contains the `BASE_URL` setting, allowing you to easily point the frontend to different backend environments.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## Contributing Guidelines
+
+Contributions are welcome! To contribute to this project, follow these steps:
+
+1.  Fork the repository.
+2.  Create a new branch for your feature or bug fix.
+3.  Make your changes and commit them with descriptive commit messages.
+4.  Push your branch to your forked repository.
+5.  Submit a pull request to the main repository.
+
+## License Information
+
+This project does not specify a license. All rights are reserved by the owner, AvielEsperansa.
+
+## Acknowledgments
+
+*   This project uses the Expo framework and React Native.
+*   The `@react-native-async-storage/async-storage` library is used for local data storage.
+*   The `expo-router` library is used for navigation.
