@@ -191,7 +191,7 @@ export default function CustomerHaircuts() {
                     <Text style={styles.detailText}>{appointment.service?.durationMinutes} דקות</Text>
                 </View>
 
-                {appointment.notes && (
+                {!!appointment.notes && (
                     <View style={styles.detailRow}>
                         <MaterialCommunityIcons name="note-text" size={16} color="#6b7280" />
                         <Text style={styles.detailText}>{appointment.notes}</Text>
@@ -237,7 +237,7 @@ export default function CustomerHaircuts() {
                     </View>
                     <View style={styles.statItem}>
                         <Text style={styles.statNumber}>
-                            ₪{filteredAppointments.reduce((sum, appointment) => sum + appointment.totalPrice, 0)}
+                            ₪{filteredAppointments.reduce((sum, appointment) => sum + (appointment.totalPrice || 0), 0)}
                         </Text>
                         <Text style={styles.statLabel}>סכום כולל</Text>
                     </View>
@@ -253,7 +253,7 @@ export default function CustomerHaircuts() {
                         onChangeText={setSearchDate}
                         textAlign="right"
                     />
-                    {searchDate && (
+                    {!!searchDate && (
                         <TouchableOpacity
                             style={styles.clearButton}
                             onPress={() => setSearchDate('')}

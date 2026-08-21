@@ -226,7 +226,7 @@ export default function BarberRatings() {
                                     </View>
                                 </View>
 
-                                {rating.review && (
+                                {!!rating.review && (
                                     <View style={styles.reviewContainer}>
                                         <Text style={styles.reviewLabel}>חוות דעת:</Text>
                                         <Text style={styles.reviewText}>{rating.review}</Text>

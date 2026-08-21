@@ -185,7 +185,7 @@ export default function CustomerDetails() {
 
             <View style={styles.appointmentDetails}>
                 <Text style={styles.serviceText}>שירות: {appointment.service}</Text>
-                {appointment.notes && (
+                {!!appointment.notes && (
                     <Text style={styles.notesText}>הערות: {appointment.notes}</Text>
                 )}
             </View>
@@ -255,9 +255,9 @@ export default function CustomerDetails() {
                     <View style={styles.customerCard}>
                         <View style={styles.customerHeader}>
                             <Text style={styles.customerName}>{customer.name}</Text>
-                            <View style={styles.whatsappButton} onPress={openWhatsApp}>
+                            <TouchableOpacity style={styles.whatsappButton} onPress={openWhatsApp}>
                                 <MaterialCommunityIcons name="whatsapp" size={24} color="#25d366" />
-                            </View>
+                            </TouchableOpacity>
                         </View>
 
                         <View style={styles.customerDetails}>
@@ -266,7 +266,7 @@ export default function CustomerDetails() {
                                 <Text style={styles.detailText}>{customer.phone}</Text>
                             </View>
 
-                            {customer.email && (
+                            {!!customer.email && (
                                 <View style={styles.detailRow}>
                                     <MaterialCommunityIcons name="email" size={20} color="#6b7280" />
                                     <Text style={styles.detailText}>{customer.email}</Text>

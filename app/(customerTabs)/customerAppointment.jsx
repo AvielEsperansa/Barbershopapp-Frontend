@@ -1,7 +1,8 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
-import React, { useEffect, useState } from 'react'
-import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native'
+import { useFocusEffect, useLocalSearchParams } from 'expo-router'
+import React, { useCallback, useEffect, useState } from 'react'
+import { ActivityIndicator, Alert, Pressable, RefreshControl, ScrollView, StyleSheet, Text, TextInput, View, useWindowDimensions } from 'react-native'
 import { Calendar } from 'react-native-calendars'
 import config from '../../config'
 import apiClient from '../../lib/apiClient'
@@ -16,8 +17,10 @@ const STEP = {
 }
 
 export default function CustomerAppointment() {
+    const params = useLocalSearchParams()
     const [step, setStep] = useState(STEP.BARBER)
     const [loading, setLoading] = useState(false)
+    const [refreshing, setRefreshing] = useState(false)
     const [error, setError] = useState('')
     const tabBarHeight = useBottomTabBarHeight()
 
@@ -68,54 +71,28 @@ export default function CustomerAppointment() {
         }
     }
 
-    useEffect(() => {
-        const fetchBarbers = async () => {
-            const endpoints = [
-                `${config.BASE_URL}/users/barbers`,
-            ]
-            for (const url of endpoints) {
-                try {
-                    const res = await apiClient.get(url)
-                    if (!res.ok) continue
-                    const json = await res.json()
-                    const arr = json.users || json.barbers || json.data || json
-                    if (Array.isArray(arr)) {
-                        const onlyBarbers = arr.filter((u) => u?.role === 'barber')
-                        return onlyBarbers.length > 0 ? onlyBarbers : arr
-                    }
-                } catch (_e) {
-                    // try next endpoint
-                }
-            }
-            return []
-        }
-
-        const init = async () => {
-            setLoading(true)
-            setError('')
+    const fetchBarbers = useCallback(async () => {
+        const endpoints = [
+            `${config.BASE_URL}/users/barbers`,
+        ]
+        for (const url of endpoints) {
             try {
-                // Load services
-                const servicesRes = await apiClient.get(`${config.BASE_URL}/services`)
-                const servicesJson = await servicesRes.json()
-                const servicesData = servicesJson.services || servicesJson
-                setServices(Array.isArray(servicesData) ? servicesData : [])
-
-                // Load barbers via multiple possible endpoints
-                const b = await fetchBarbers()
-                setBarbers(Array.isArray(b) ? b : [])
-
-                // Load user's upcoming appointments
-                await loadMyAppointments()
-            } catch (e) {
-                setError(e instanceof Error ? e.message : 'Failed to load data')
-            } finally {
-                setLoading(false)
+                const res = await apiClient.get(url)
+                if (!res.ok) continue
+                const json = await res.json()
+                const arr = json.users || json.barbers || json.data || json
+                if (Array.isArray(arr)) {
+                    const onlyBarbers = arr.filter((u) => u?.role === 'barber')
+                    return onlyBarbers.length > 0 ? onlyBarbers : arr
+                }
+            } catch (_e) {
+                // try next endpoint
             }
         }
-        init()
+        return []
     }, [])
 
-    const loadMyAppointments = async () => {
+    const loadMyAppointments = useCallback(async () => {
         try {
             const response = await apiClient.get(`${config.BASE_URL}/appointments/`)
             const data = await response.json()
@@ -147,7 +124,55 @@ export default function CustomerAppointment() {
             console.error('Error loading appointments:', error)
             setMyAppointments([])
         }
-    }
+    }, [])
+
+    const refreshAllData = useCallback(async (showSpinner = true, resetWizard = false) => {
+        if (showSpinner) setLoading(true)
+        setError('')
+        if (resetWizard) {
+            setStep(STEP.BARBER)
+            setSelectedBarber(null)
+            setSelectedService(null)
+            setSelectedDate(null)
+            setSelectedSlot(null)
+            setAvailableSlots([])
+        }
+        try {
+            // Load services
+            const servicesRes = await apiClient.get(`${config.BASE_URL}/services`).catch(() => null)
+            if (servicesRes && servicesRes.ok) {
+                const servicesJson = await servicesRes.json()
+                const servicesData = servicesJson.services || servicesJson
+                setServices(Array.isArray(servicesData) ? servicesData : [])
+            }
+
+            // Load barbers
+            const b = await fetchBarbers()
+            setBarbers(Array.isArray(b) ? b : [])
+
+            // Load upcoming appointments
+            await loadMyAppointments()
+        } catch (e) {
+            setError(e instanceof Error ? e.message : 'Failed to load data')
+        } finally {
+            if (showSpinner) setLoading(false)
+        }
+    }, [fetchBarbers, loadMyAppointments])
+
+    // רענון בעת מעבר לטאב
+    useFocusEffect(
+        useCallback(() => {
+            refreshAllData(true)
+        }, [refreshAllData])
+    )
+
+    // רענון אם נלחץ הטאב שוב מחדש
+    useEffect(() => {
+        if (params?.refresh) {
+            refreshAllData(false, true)
+        }
+    }, [params?.refresh, refreshAllData])
+
 
     const onSelectBarber = async (barber) => {
         setSelectedBarber(barber)
@@ -463,7 +488,21 @@ export default function CustomerAppointment() {
                 <View style={styles.error}><Text style={styles.errorText}>{error}</Text></View>
             )}
 
-            <ScrollView contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}>
+            <ScrollView
+                contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={async () => {
+                            setRefreshing(true)
+                            await refreshAllData(false, true)
+                            setRefreshing(false)
+                        }}
+                        colors={['#3b82f6']}
+                        tintColor="#3b82f6"
+                    />
+                }
+            >
                 {!loading && step === STEP.BARBER && (
                     <View style={styles.list}>
                         {barbers.length === 0 ? (

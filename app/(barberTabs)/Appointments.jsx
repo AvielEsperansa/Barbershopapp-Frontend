@@ -113,8 +113,9 @@ export default function Appointments() {
 
     const loadWorkingHours = useCallback(async () => {
         try {
+            if (!barberId) return
             setWorkingHoursLoading(true)
-            const response = await apiClient.get(`${config.BASE_URL}/barbers/${barberId}/working-hours`)
+            const response = await apiClient.get(`${config.BASE_URL}/working-hours/barber/${barberId}`)
 
             if (response.ok) {
                 const data = await response.json()
@@ -170,6 +171,10 @@ export default function Appointments() {
 
     const saveWorkingHours = async () => {
         try {
+            if (!barberId) {
+                Alert.alert('שגיאה', 'לא זוהה מזהה ספר')
+                return
+            }
             const workingHoursArray = Object.values(workingHours)
             const response = await apiClient.post(`${config.BASE_URL}/working-hours/barber/${barberId}`, {
                 workingHours: workingHoursArray
@@ -178,7 +183,9 @@ export default function Appointments() {
             if (response.ok) {
                 Alert.alert('הצלחה', 'שעות העבודה נשמרו בהצלחה')
             } else {
-                throw new Error('שגיאה בשמירת שעות העבודה')
+                const errorData = await response.json().catch(() => ({}))
+                const errorMsg = errorData.error || errorData.message || `שגיאה (${response.status})`
+                throw new Error(errorMsg)
             }
         } catch (error) {
             console.error('Error saving working hours:', error)
@@ -673,7 +680,7 @@ export default function Appointments() {
                                                     <Text style={styles.serviceText}>שירות: {appointment.service?.name}</Text>
                                                     <Text style={styles.priceText}>מחיר: ₪{appointment.totalPrice}</Text>
                                                     <Text style={styles.durationText}>משך: {appointment.service?.durationMinutes} דקות</Text>
-                                                    {appointment.notes && (
+                                                    {!!appointment.notes && (
                                                         <Text style={styles.notesText}>הערות: {appointment.notes}</Text>
                                                     )}
                                                 </View>
@@ -750,7 +757,7 @@ export default function Appointments() {
                                                     <Text style={styles.serviceText}>שירות: {appointment.service?.name}</Text>
                                                     <Text style={styles.priceText}>מחיר: ₪{appointment.totalPrice}</Text>
                                                     <Text style={styles.durationText}>משך: {appointment.service?.durationMinutes} דקות</Text>
-                                                    {appointment.notes && (
+                                                    {!!appointment.notes && (
                                                         <Text style={styles.notesText}>הערות: {appointment.notes}</Text>
                                                     )}
                                                 </View>

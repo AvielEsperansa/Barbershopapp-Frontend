@@ -25,12 +25,20 @@ export default function _layout() {
                     ),
 
                 }} />
-                <Tabs.Screen name="customerAppointment" options={{
-                    title: "Appointments",
-                    tabBarIcon: ({ color, size }) => (
-                        <MaterialCommunityIcons name="calendar" color={color} size={size} />
-                    ),
-                }} />
+                <Tabs.Screen
+                    name="customerAppointment"
+                    options={{
+                        title: "Appointments",
+                        tabBarIcon: ({ color, size }) => (
+                            <MaterialCommunityIcons name="calendar" color={color} size={size} />
+                        ),
+                    }}
+                    listeners={({ navigation }) => ({
+                        tabPress: () => {
+                            navigation.navigate('customerAppointment', { refresh: Date.now() })
+                        }
+                    })}
+                />
                 <Tabs.Screen name="customerProfile" options={{
                     title: "Profile",
                     tabBarIcon: ({ color, size }) => (

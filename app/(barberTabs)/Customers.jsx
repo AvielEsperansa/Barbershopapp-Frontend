@@ -167,7 +167,7 @@ export default function Customers() {
                             <Text style={styles.detailText}>{customer.phone}</Text>
                         </View>
 
-                        {customer.email && (
+                        {!!customer.email && (
                             <View style={styles.detailRow}>
                                 <MaterialCommunityIcons name="email" size={16} color="#6b7280" />
                                 <Text style={styles.detailText}>{customer.email}</Text>

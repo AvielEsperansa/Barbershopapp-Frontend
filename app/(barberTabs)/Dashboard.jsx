@@ -124,7 +124,7 @@ export default function Dashboard() {
                             {ratingStats?.averageRating ? ratingStats.averageRating.toFixed(1) : '0.0'}
                         </Text>
                         <Text style={styles.statLabel}>דירוג ממוצע</Text>
-                        {ratingStats?.totalRatings && (
+                        {!!ratingStats?.totalRatings && (
                             <Text style={styles.ratingCount}>({ratingStats.totalRatings} דירוגים)</Text>
                         )}
                     </View>

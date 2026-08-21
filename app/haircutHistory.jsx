@@ -290,7 +290,7 @@ export default function HaircutHistory() {
                                     </View>
                                 </View>
 
-                                {appointment.notes && (
+                                {!!appointment.notes && (
                                     <View style={styles.notesContainer}>
                                         <Text style={styles.notesLabel}>הערות:</Text>
                                         <Text style={styles.notesText}>{appointment.notes}</Text>
@@ -313,7 +313,7 @@ export default function HaircutHistory() {
                                                 />
                                             ))}
                                         </View>
-                                        {ratings[appointment._id].review && (
+                                        {!!ratings[appointment._id].review && (
                                             <Text style={styles.ratingReview}>{ratings[appointment._id].review}</Text>
                                         )}
                                         <View style={styles.ratingActions}>
