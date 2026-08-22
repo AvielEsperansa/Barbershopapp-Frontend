@@ -79,8 +79,7 @@ export default function Customers() {
                 const customer = appointment.customer
                 const customerName = `${customer.firstName} ${customer.lastName}`
                 return customerName?.toLowerCase().includes(searchText.toLowerCase()) ||
-                    customer.phone?.includes(searchText) ||
-                    customer.email?.toLowerCase().includes(searchText.toLowerCase())
+                    customer.phone?.includes(searchText)
             })
         }
 
@@ -166,14 +165,6 @@ export default function Customers() {
                             <MaterialCommunityIcons name="phone" size={16} color="#6b7280" />
                             <Text style={styles.detailText}>{customer.phone}</Text>
                         </View>
-
-                        {!!customer.email && (
-                            <View style={styles.detailRow}>
-                                <MaterialCommunityIcons name="email" size={16} color="#6b7280" />
-                                <Text style={styles.detailText}>{customer.email}</Text>
-                            </View>
-                        )}
-
                         <View style={styles.detailRow}>
                             <MaterialCommunityIcons name="calendar" size={16} color="#6b7280" />
                             <Text style={styles.detailText}>

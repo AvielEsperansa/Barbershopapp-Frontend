@@ -1,6 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
+import { MaterialCommunityIcons } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Alert, Pressable, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native'
 import config from '../config'
 import SafeScreen from './components/SafeScreen'
@@ -10,14 +12,11 @@ export default function EditProfile() {
     const [error, setError] = useState('')
     const [firstName, setFirstName] = useState('')
     const [lastName, setLastName] = useState('')
-    const [email, setEmail] = useState('')
     const [phone, setPhone] = useState('')
 
-    // שמירת הערכים המקוריים להשוואה
     const [originalValues, setOriginalValues] = useState({
         firstName: '',
         lastName: '',
-        email: '',
         phone: ''
     })
 
@@ -34,14 +33,11 @@ export default function EditProfile() {
                 const u = json.user || json
                 setFirstName(u.firstName || '')
                 setLastName(u.lastName || '')
-                setEmail(u.email || '')
                 setPhone(u.phone || '')
 
-                // שמירת הערכים המקוריים להשוואה
                 setOriginalValues({
                     firstName: u.firstName || '',
                     lastName: u.lastName || '',
-                    email: u.email || '',
                     phone: u.phone || ''
                 })
             } catch (e) {
@@ -54,12 +50,10 @@ export default function EditProfile() {
     }, [])
 
     const onSave = async () => {
-        // בדיקה אם יש שינויים
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
         const hasChanges =
             firstName !== originalValues.firstName ||
-            lastName !== originalValues.lastName ||
-            email !== originalValues.email ||
-            phone !== originalValues.phone
+            lastName !== originalValues.lastName
 
         if (!hasChanges) {
             Alert.alert('מידע', 'לא בוצעו שינויים בפרטים')
@@ -78,22 +72,17 @@ export default function EditProfile() {
                 },
                 body: JSON.stringify({
                     firstName,
-                    lastName,
-                    email,
-                    phone
+                    lastName
                 })
             })
             const json = await res.json()
             if (!res.ok) throw new Error(json?.error || 'Failed to update profile')
 
-            // בדיקה שהבקנד החזיר הודעה על הצלחה
-            if (json.message === 'Profile updated successfully') {
+            if (json.message === 'Profile updated successfully' || json.user) {
                 Alert.alert('הצלחה', 'הפרטים עודכנו בהצלחה')
-                // עדכון הערכים המקוריים
                 setOriginalValues({
                     firstName,
                     lastName,
-                    email,
                     phone
                 })
                 router.back()
@@ -107,52 +96,76 @@ export default function EditProfile() {
         }
     }
 
-    // פונקציה לבדיקה אם יש שינויים
     const hasUnsavedChanges = () => {
         return firstName !== originalValues.firstName ||
-            lastName !== originalValues.lastName ||
-            email !== originalValues.email ||
-            phone !== originalValues.phone
+            lastName !== originalValues.lastName
     }
 
     return (
         <SafeScreen backgroundColor="#f8fafc">
-            <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 24 }]}>
-                <Text style={styles.title}>עריכת פרטים</Text>
+            <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 30 }]}>
+                {/* Header Nav */}
+                <View style={styles.headerRow}>
+                    <Pressable
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                            router.back()
+                        }}
+                        style={styles.backBtn}
+                    >
+                        <MaterialCommunityIcons name="arrow-right" size={22} color="#0f172a" />
+                        <Text style={styles.backBtnText}>חזרה</Text>
+                    </Pressable>
+                    <Text style={styles.title}>עריכת פרטים אישיים ✏️</Text>
+                </View>
+
                 {!!error && <Text style={styles.error}>{error}</Text>}
 
-                <View style={styles.field}>
-                    <Text style={styles.label}>שם פרטי</Text>
-                    <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="ישראל" textAlign="right" />
-                </View>
-                <View style={styles.field}>
-                    <Text style={styles.label}>שם משפחה</Text>
-                    <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="ישראלי" textAlign="right" />
-                </View>
-                <View style={styles.field}>
-                    <Text style={styles.label}>אימייל</Text>
-                    <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" textAlign="right" />
-                </View>
-                <View style={styles.field}>
-                    <Text style={styles.label}>טלפון</Text>
-                    <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="050-1234567" keyboardType="phone-pad" textAlign="right" />
-                </View>
+                <View style={styles.card}>
+                    <View style={styles.field}>
+                        <Text style={styles.label}>שם פרטי</Text>
+                        <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="ישראל" textAlign="right" />
+                    </View>
+                    <View style={styles.field}>
+                        <Text style={styles.label}>שם משפחה</Text>
+                        <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="ישראלי" textAlign="right" />
+                    </View>
+                    <View style={styles.field}>
+                        <Text style={styles.label}>מספר טלפון (נעול)</Text>
+                        <TextInput
+                            style={[styles.input, styles.disabledInput]}
+                            value={phone}
+                            editable={false}
+                            textAlign="right"
+                        />
+                        <Text style={styles.disabledNote}>🔒 מספר הטלפון משמש כמזהה החשבון ולא ניתן לשינוי</Text>
+                    </View>
 
-                <Pressable
-                    disabled={loading || !hasUnsavedChanges()}
-                    onPress={onSave}
-                    style={[
-                        styles.saveButton,
-                        (loading || !hasUnsavedChanges()) && { opacity: 0.5 }
-                    ]}
-                >
-                    <Text style={styles.saveButtonText}>
-                        {hasUnsavedChanges() ? 'שמירה' : 'אין שינויים'}
-                    </Text>
-                </Pressable>
-                <Pressable disabled={loading} onPress={() => router.back()} style={styles.cancelButton}>
-                    <Text style={styles.cancelButtonText}>ביטול</Text>
-                </Pressable>
+                    <Pressable
+                        disabled={loading || !hasUnsavedChanges()}
+                        onPress={onSave}
+                        style={({ pressed }) => [
+                            styles.saveButton,
+                            (loading || !hasUnsavedChanges()) && { opacity: 0.5 },
+                            pressed && hasUnsavedChanges() && { opacity: 0.85 }
+                        ]}
+                    >
+                        <Text style={styles.saveButtonText}>
+                            {hasUnsavedChanges() ? 'שמור שינויים' : 'אין שינויים'}
+                        </Text>
+                    </Pressable>
+
+                    <Pressable
+                        disabled={loading}
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                            router.back()
+                        }}
+                        style={styles.cancelButton}
+                    >
+                        <Text style={styles.cancelButtonText}>ביטול</Text>
+                    </Pressable>
+                </View>
             </ScrollView>
         </SafeScreen>
     )
@@ -161,57 +174,110 @@ export default function EditProfile() {
 const styles = StyleSheet.create({
     container: {
         padding: 16,
-        gap: 14,
+        gap: 16,
         backgroundColor: '#f8fafc'
     },
+    headerRow: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 4,
+    },
+    backBtn: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        gap: 4,
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        backgroundColor: '#e2e8f0',
+    },
+    backBtnText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#0f172a',
+    },
     title: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#111827',
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#0f172a',
         textAlign: 'right',
-        marginBottom: 8
     },
     error: {
-        color: '#b91c1c',
-        textAlign: 'center'
+        color: '#dc2626',
+        textAlign: 'center',
+        fontWeight: '500',
+    },
+    card: {
+        backgroundColor: '#ffffff',
+        borderRadius: 20,
+        padding: 20,
+        gap: 16,
+        borderWidth: 1,
+        borderColor: '#e2e8f0',
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+        elevation: 2,
     },
     field: {
         gap: 6
     },
     label: {
-        color: '#6b7280',
+        color: '#475569',
+        fontSize: 14,
+        fontWeight: '600',
         textAlign: 'right'
     },
     input: {
-        backgroundColor: '#fff',
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-        borderRadius: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 10
+        backgroundColor: '#f8fafc',
+        borderWidth: 1.5,
+        borderColor: '#cbd5e1',
+        borderRadius: 14,
+        paddingHorizontal: 14,
+        paddingVertical: 12,
+        fontSize: 16,
+        color: '#0f172a',
+    },
+    disabledInput: {
+        backgroundColor: '#f1f5f9',
+        borderColor: '#e2e8f0',
+        color: '#64748b',
+        fontWeight: '600'
+    },
+    disabledNote: {
+        fontSize: 12,
+        color: '#64748b',
+        textAlign: 'right',
+        marginTop: 2
     },
     saveButton: {
-        backgroundColor: '#111827',
-        paddingVertical: 14,
-        borderRadius: 12,
+        backgroundColor: '#0f172a',
+        paddingVertical: 16,
+        borderRadius: 14,
         alignItems: 'center',
-        marginTop: 8
+        marginTop: 8,
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 6,
+        elevation: 3,
     },
     saveButtonText: {
-        color: '#fff',
-        fontWeight: '700'
+        color: '#ffffff',
+        fontWeight: 'bold',
+        fontSize: 16,
     },
     cancelButton: {
-        backgroundColor: '#f3f4f6',
-        paddingVertical: 12,
-        borderRadius: 10,
+        backgroundColor: '#f1f5f9',
+        paddingVertical: 14,
+        borderRadius: 14,
         alignItems: 'center',
-        marginTop: 8
     },
     cancelButtonText: {
-        color: '#111827',
-        fontWeight: '600'
+        color: '#0f172a',
+        fontWeight: '600',
+        fontSize: 15,
     }
 })
-
-

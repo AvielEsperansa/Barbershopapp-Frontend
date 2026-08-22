@@ -1,4 +1,5 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import { useFocusEffect, useLocalSearchParams } from 'expo-router'
 import React, { useCallback, useEffect, useState } from 'react'
@@ -308,18 +309,8 @@ export default function CustomerAppointment() {
             Alert.alert('נקבע תור בהצלחה')
             console.log("----------------------------------------- appointment created", json);
 
-            // שליחת הודעות אוטומטיות
+            // תזכורת 24 שעות לפני התור
             try {
-                // הודעת אישור מיידית
-                await notificationManager.sendAppointmentConfirmation({
-                    id: json.appointment?._id || json._id,
-                    barberName: `${selectedBarber.firstName} ${selectedBarber.lastName}`,
-                    serviceName: selectedService.name,
-                    date: selectedDate,
-                    startTime: selectedSlot.startTime
-                });
-
-                // תזכורת 24 שעות לפני התור
                 await notificationManager.scheduleAppointmentReminder({
                     id: json.appointment?._id || json._id,
                     barberName: `${selectedBarber.firstName} ${selectedBarber.lastName}`,
@@ -328,8 +319,7 @@ export default function CustomerAppointment() {
                     startTime: selectedSlot.startTime
                 });
             } catch (notificationError) {
-                console.log('Failed to send notifications:', notificationError);
-                // לא מפריעים למשתמש אם ההודעות נכשלו
+                console.log('Failed to schedule reminder:', notificationError);
             }
 
             await loadMyAppointments()
@@ -388,19 +378,6 @@ export default function CustomerAppointment() {
                             } else {
                                 Alert.alert('התור בוטל')
 
-                                // שליחת הודעת ביטול
-                                try {
-                                    await notificationManager.sendAppointmentCancellation({
-                                        id: apptId,
-                                        barberName: appt.barber?.firstName ? `${appt.barber.firstName} ${appt.barber.lastName || ''}`.trim() : appt.barberName,
-                                        serviceName: appt.service?.name || appt.serviceName,
-                                        date: appt.date || appt.startDate,
-                                        startTime: appt.startTime
-                                    });
-                                } catch (notificationError) {
-                                    console.log('Failed to send cancellation notification:', notificationError);
-                                }
-
                                 // Optimistic UI: remove from list
                                 setMyAppointments((prev) => (prev || []).filter((x) => (x._id || x.id) !== apptId))
                                 await loadMyAppointments()
@@ -414,56 +391,148 @@ export default function CustomerAppointment() {
         )
     }
 
+    const renderStepWizard = () => {
+        const stepsList = [
+            { id: STEP.BARBER, label: 'ספר', icon: 'account' },
+            { id: STEP.SERVICE, label: 'טיפול', icon: 'content-cut' },
+            { id: STEP.DATE, label: 'תאריך', icon: 'calendar-month' },
+            { id: STEP.TIME, label: 'שעה', icon: 'clock-outline' },
+            { id: STEP.SUMMARY, label: 'סיכום', icon: 'check-circle-outline' },
+        ];
+
+        return (
+            <View style={styles.wizardRow}>
+                {stepsList.map((s) => {
+                    const isActive = step === s.id;
+                    const isDone = step > s.id;
+
+                    return (
+                        <View key={s.id} style={styles.wizardItem}>
+                            <View style={[
+                                styles.wizardIconCircle,
+                                isActive && styles.wizardIconActive,
+                                isDone && styles.wizardIconDone
+                            ]}>
+                                <MaterialCommunityIcons
+                                    name={isDone ? 'check' : s.icon}
+                                    size={16}
+                                    color={isActive ? '#ffffff' : isDone ? '#2563eb' : '#94a3b8'}
+                                />
+                            </View>
+                            <Text style={[
+                                styles.wizardLabel,
+                                isActive && styles.wizardLabelActive,
+                                isDone && styles.wizardLabelDone
+                            ]}>
+                                {s.label}
+                            </Text>
+                        </View>
+                    );
+                })}
+            </View>
+        );
+    };
+
     const renderHeader = () => (
-        <View style={styles.header}>
+        <View style={styles.headerContainer}>
             <View style={styles.headerRow}>
                 {step !== STEP.BARBER && (
-                    <Pressable onPress={goBackStep} style={styles.backButton}>
-                        <MaterialCommunityIcons name="arrow-right" size={22} color="#111827" />
+                    <Pressable
+                        onPress={() => {
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                            goBackStep();
+                        }}
+                        style={styles.backButton}
+                    >
+                        <MaterialCommunityIcons name="arrow-right" size={20} color="#1f2937" />
                         <Text style={styles.backText}>חזרה</Text>
                     </Pressable>
                 )}
-                <Text style={styles.title}>קביעת פגישה</Text>
+                <Text style={styles.title}>קביעת תור למספרה ✂️</Text>
             </View>
-            <Text style={styles.subtitle}>
-                {step === STEP.BARBER && 'בחרו ספר'}
-                {step === STEP.SERVICE && 'בחרו טיפול'}
-                {step === STEP.DATE && 'בחרו תאריך'}
-                {step === STEP.TIME && 'בחרו שעה'}
-                {step === STEP.SUMMARY && 'סיכום ההזמנה'}
-            </Text>
+            {renderStepWizard()}
         </View>
     )
 
     const BarberCard = ({ item }) => (
-        <Pressable style={[styles.card, selectedBarber?._id === item._id && styles.cardSelected]} onPress={() => onSelectBarber(item)}>
-            <MaterialCommunityIcons name="account" size={28} color="#1f2937" />
+        <Pressable
+            style={({ pressed }) => [
+                styles.card,
+                selectedBarber?._id === item._id && styles.cardSelected,
+                pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }
+            ]}
+            onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                onSelectBarber(item);
+            }}
+        >
+            <View style={styles.avatarCircle}>
+                <MaterialCommunityIcons name="content-cut" size={24} color="#2563eb" />
+            </View>
             <View style={{ flex: 1 }}>
                 <Text style={styles.cardTitle}>{item.firstName} {item.lastName}</Text>
-                <Text style={styles.cardSubtitle}>ספר</Text>
+                <View style={styles.badgeRow}>
+                    <Text style={styles.cardSubtitle}>ספר מקצועי</Text>
+                    <View style={styles.ratingBadge}>
+                        <MaterialCommunityIcons name="star" size={12} color="#d97706" />
+                        <Text style={styles.ratingText}>4.9</Text>
+                    </View>
+                </View>
             </View>
-            <MaterialCommunityIcons name="chevron-left" size={24} color="#9ca3af" />
+            <MaterialCommunityIcons name="chevron-left" size={24} color="#6b7280" />
         </Pressable>
     )
 
     const ServiceCard = ({ item }) => (
-        <Pressable style={[styles.card, selectedService?._id === item._id && styles.cardSelected]} onPress={() => { setSelectedService(item); setStep(STEP.DATE) }}>
-            <MaterialCommunityIcons name="content-cut" size={28} color="#1f2937" />
+        <Pressable
+            style={({ pressed }) => [
+                styles.card,
+                selectedService?._id === item._id && styles.cardSelected,
+                pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }
+            ]}
+            onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                setSelectedService(item);
+                setStep(STEP.DATE);
+            }}
+        >
+            <View style={[styles.avatarCircle, { backgroundColor: '#fef3c7' }]}>
+                <MaterialCommunityIcons name="scissors-cutting" size={24} color="#d97706" />
+            </View>
             <View style={{ flex: 1 }}>
                 <Text style={styles.cardTitle}>{item.name}</Text>
-                <Text style={styles.cardSubtitle}>{item.durationMinutes} ד׳ • ₪{item.price}</Text>
+                <View style={styles.badgeRow}>
+                    <View style={styles.durationPill}>
+                        <MaterialCommunityIcons name="clock-outline" size={12} color="#475569" />
+                        <Text style={styles.durationText}>{item.durationMinutes} דק׳</Text>
+                    </View>
+                    <Text style={styles.priceText}>₪{item.price}</Text>
+                </View>
             </View>
-            <MaterialCommunityIcons name="chevron-left" size={24} color="#9ca3af" />
+            <MaterialCommunityIcons name="chevron-left" size={24} color="#6b7280" />
         </Pressable>
     )
-
-    // Replaced date pills with a full calendar
 
     const SlotPill = ({ slot }) => {
         const isSelected = selectedSlot && selectedSlot.startTime === slot.startTime
         return (
-            <Pressable disabled={!slot.isAvailable} onPress={() => { setSelectedSlot(slot); setStep(STEP.SUMMARY) }} style={[styles.slotPill, isSelected && styles.slotPillSelected, !slot.isAvailable && styles.slotPillDisabled]}>
-                <Text style={[styles.slotPillText, !slot.isAvailable && styles.slotPillTextDisabled]}>{slot.startTime}</Text>
+            <Pressable
+                disabled={!slot.isAvailable}
+                onPress={() => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+                    setSelectedSlot(slot);
+                    setStep(STEP.SUMMARY);
+                }}
+                style={({ pressed }) => [
+                    styles.slotPill,
+                    isSelected && styles.slotPillSelected,
+                    !slot.isAvailable && styles.slotPillDisabled,
+                    pressed && slot.isAvailable && { opacity: 0.8 }
+                ]}
+            >
+                <Text style={[styles.slotPillText, isSelected && styles.slotPillTextSelected, !slot.isAvailable && styles.slotPillTextDisabled]}>
+                    {slot.startTime}
+                </Text>
             </Pressable>
         )
     }
@@ -471,7 +540,7 @@ export default function CustomerAppointment() {
     const getSelectedDateDisplay = () => {
         if (!selectedDate) return ''
         const d = typeof selectedDate === 'string' ? new Date(selectedDate) : selectedDate
-        return d instanceof Date && !isNaN(d) ? d.toLocaleDateString('he-IL') : String(selectedDate)
+        return d instanceof Date && !isNaN(d.getTime()) ? d.toLocaleDateString('he-IL') : String(selectedDate)
     }
 
     return (
@@ -530,7 +599,14 @@ export default function CustomerAppointment() {
                 {!loading && step === STEP.DATE && (
                     <View style={{ paddingHorizontal: 16 }}>
                         <Text style={styles.sectionTitle}>בחרו תאריך (מהיום והלאה)</Text>
-                        <Text style={styles.helper}>ניתן לבחור תאריכים מהיום ועד חודש קדימה</Text>
+                        <Text style={styles.helper}>
+                            {(() => {
+                                const days = selectedBarber?.bookingWindowDays || 30;
+                                if (days === 7) return 'ניתן לבחור תאריכים לשבוע הקרוב (7 ימים) בלבד';
+                                if (days === 14) return 'ניתן לבחור תאריכים לשבועיים הקרובים (14 ימים) בלבד';
+                                return 'ניתן לבחור תאריכים עד חודש קדימה (30 ימים)';
+                            })()}
+                        </Text>
                         <Calendar
                             onDayPress={(day) => {
                                 // בדיקה נוספת שהתאריך לא בעבר
@@ -561,12 +637,17 @@ export default function CustomerAppointment() {
                                 }
                             }}
                             minDate={new Date().toISOString().split('T')[0]}
-                            maxDate={(() => { const d = new Date(); d.setDate(d.getDate() + 29); return d.toISOString().split('T')[0] })()}
+                            maxDate={(() => {
+                                const days = (selectedBarber?.bookingWindowDays || 30) - 1;
+                                const d = new Date();
+                                d.setDate(d.getDate() + days);
+                                return d.toISOString().split('T')[0];
+                            })()}
                             disableAllTouchEventsForDisabledDays={true}
                             markingType="custom"
                             firstDay={0}
                             hideExtraDays
-                            disableArrowLeft={false} // מאפשר חזרה לחודשים קודמים אבל לא לבחור תאריכים בעבר
+                            disableArrowLeft={false}
                         />
                         <Text style={styles.helper}>לחץ על תאריך כדי לראות זמנים פנויים</Text>
                     </View>
@@ -622,7 +703,7 @@ export default function CustomerAppointment() {
                                     <Text style={styles.summaryLabel}>שעה:</Text>
                                     <Text style={styles.summaryValue}>{appt.startTime || (appt.time && appt.time.start) || '-'}</Text>
                                 </View>
-                                {!!(appt.service?.name || appt.serviceName) && (
+                                 {!!(appt.service?.name || appt.serviceName) && (
                                     <View style={styles.summaryRow}>
                                         <Text style={styles.summaryLabel}>טיפול:</Text>
                                         <Text style={styles.summaryValue}>{appt.service?.name || appt.serviceName}</Text>
@@ -651,123 +732,205 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: '#f8fafc'
     },
-    header: {
-        paddingTop: 24,
-        paddingBottom: 8,
+    headerContainer: {
+        paddingTop: 20,
+        paddingBottom: 14,
         paddingHorizontal: 16,
+        backgroundColor: '#ffffff',
+        borderBottomWidth: 1,
+        borderBottomColor: '#f1f5f9',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 6,
+        elevation: 2,
+        marginBottom: 12,
     },
     headerRow: {
         flexDirection: 'row-reverse',
         alignItems: 'center',
         justifyContent: 'space-between',
-        marginBottom: 6
+        marginBottom: 14
     },
     backButton: {
         flexDirection: 'row-reverse',
         alignItems: 'center',
-        gap: 6,
+        gap: 4,
         paddingVertical: 6,
-        paddingHorizontal: 8,
-        borderRadius: 8,
-        backgroundColor: '#f3f4f6'
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        backgroundColor: '#f1f5f9'
     },
     backText: {
-        color: '#111827',
+        color: '#1f2937',
         fontSize: 14,
         fontWeight: '600'
     },
     title: {
-        fontSize: 24,
-        fontWeight: '700',
-        color: '#111827',
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#0f172a',
         textAlign: 'right'
     },
-    subtitle: {
-        fontSize: 14,
-        color: '#6b7280',
-        textAlign: 'right'
+    wizardRow: {
+        flexDirection: 'row-reverse',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 6,
+    },
+    wizardItem: {
+        alignItems: 'center',
+        gap: 4,
+    },
+    wizardIconCircle: {
+        width: 32,
+        height: 32,
+        borderRadius: 16,
+        backgroundColor: '#f1f5f9',
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 1,
+        borderColor: '#cbd5e1',
+    },
+    wizardIconActive: {
+        backgroundColor: '#2563eb',
+        borderColor: '#2563eb',
+    },
+    wizardIconDone: {
+        backgroundColor: '#dbeafe',
+        borderColor: '#93c5fd',
+    },
+    wizardLabel: {
+        fontSize: 11,
+        fontWeight: '600',
+        color: '#94a3b8',
+    },
+    wizardLabelActive: {
+        color: '#2563eb',
+        fontWeight: 'bold',
+    },
+    wizardLabelDone: {
+        color: '#1e40af',
     },
     list: {
         padding: 16,
         gap: 12
     },
     card: {
-        flexDirection: 'row',
+        flexDirection: 'row-reverse',
         alignItems: 'center',
-        gap: 12,
-        padding: 14,
-        backgroundColor: '#fff',
-        borderRadius: 12,
+        gap: 14,
+        padding: 16,
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: '#e2e8f0',
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+        elevation: 2,
     },
     cardSelected: {
-        borderColor: '#3b82f6',
-        backgroundColor: '#eff6ff'
+        borderColor: '#2563eb',
+        backgroundColor: '#eff6ff',
+        borderWidth: 1.5,
+    },
+    avatarCircle: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: '#dbeafe',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     cardTitle: {
         fontSize: 16,
-        color: '#111827',
-        fontWeight: '600'
+        color: '#0f172a',
+        fontWeight: 'bold',
+        textAlign: 'right',
     },
     cardSubtitle: {
         fontSize: 13,
-        color: '#6b7280'
+        color: '#64748b',
+        textAlign: 'right',
+    },
+    badgeRow: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 4,
+    },
+    ratingBadge: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        gap: 3,
+        backgroundColor: '#fef3c7',
+        paddingHorizontal: 6,
+        paddingVertical: 2,
+        borderRadius: 6,
+    },
+    ratingText: {
+        fontSize: 11,
+        fontWeight: 'bold',
+        color: '#d97706',
+    },
+    durationPill: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: '#f1f5f9',
+        paddingHorizontal: 8,
+        paddingVertical: 2,
+        borderRadius: 6,
+    },
+    durationText: {
+        fontSize: 12,
+        color: '#475569',
+        fontWeight: '500',
+    },
+    priceText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#059669',
     },
     sectionTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#111827',
+        fontSize: 17,
+        fontWeight: 'bold',
+        color: '#0f172a',
         textAlign: 'right'
     },
-    datePill: {
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-        backgroundColor: '#fff',
-        paddingVertical: 10,
-        paddingHorizontal: 12,
-        borderRadius: 10,
-        marginRight: 10,
-    },
-    datePillSelected: {
-        borderColor: '#3b82f6',
-        backgroundColor: '#eff6ff'
-    },
-    datePillDisabled: {
-        backgroundColor: '#fee2e2',
-        borderColor: '#fecaca'
-    },
-    datePillText: {
-        color: '#111827',
-        fontSize: 13
-    },
-    datePillTextDisabled: {
-        color: '#991b1b'
-    },
     slotPill: {
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-        backgroundColor: '#fff',
-        paddingVertical: 10,
-        paddingHorizontal: 12,
-        borderRadius: 10,
-        marginRight: 0,
+        borderWidth: 1.5,
+        borderColor: '#e2e8f0',
+        backgroundColor: '#ffffff',
+        paddingVertical: 12,
+        paddingHorizontal: 10,
+        borderRadius: 14,
+        alignItems: 'center',
+        justifyContent: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 4,
+        elevation: 1,
     },
     slotPillSelected: {
-        borderColor: '#10b981',
-        backgroundColor: '#ecfdf5'
+        borderColor: '#0f172a',
+        backgroundColor: '#0f172a',
     },
     slotPillDisabled: {
-        backgroundColor: '#f3f4f6',
-        borderColor: '#e5e7eb',
-        opacity: 0.6
+        backgroundColor: '#f1f5f9',
+        borderColor: '#e2e8f0',
+        opacity: 0.5
     },
     slotPillText: {
-        color: '#111827',
-        fontSize: 13
+        color: '#0f172a',
+        fontSize: 14,
+        fontWeight: 'bold',
     },
-    slotPillTextDisabled: {
-        color: '#6b7280'
+    slotPillTextSelected: {
+        color: '#ffffff',
     },
     slotsGrid: {
         flexDirection: 'row',

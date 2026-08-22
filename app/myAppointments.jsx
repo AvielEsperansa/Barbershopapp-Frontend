@@ -4,7 +4,6 @@ import React, { useCallback, useEffect, useState } from 'react'
 import { ActivityIndicator, Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import config from '../config'
 import apiClient from '../lib/apiClient'
-import notificationManager from '../lib/notificationManager'
 import SafeScreen from './components/SafeScreen'
 
 export default function MyAppointments() {
@@ -80,19 +79,6 @@ export default function MyAppointments() {
                                 Alert.alert('שגיאה', json?.error || 'נכשל לבטל את התור')
                             } else {
                                 Alert.alert('התור בוטל')
-
-                                // שליחת הודעת ביטול
-                                try {
-                                    await notificationManager.sendAppointmentCancellation({
-                                        id: apptId,
-                                        barberName: appt.barber?.firstName ? `${appt.barber.firstName} ${appt.barber.lastName || ''}`.trim() : appt.barberName,
-                                        serviceName: appt.service?.name || appt.serviceName,
-                                        date: appt.date || appt.startDate,
-                                        startTime: appt.startTime
-                                    });
-                                } catch (notificationError) {
-                                    console.log('Failed to send cancellation notification:', notificationError);
-                                }
 
                                 // Optimistic UI: remove from list
                                 setAppointments((prev) => (prev || []).filter((x) => (x._id || x.id) !== apptId))

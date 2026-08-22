@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
     ActivityIndicator,
     Alert,
@@ -265,13 +265,6 @@ export default function CustomerDetails() {
                                 <MaterialCommunityIcons name="phone" size={20} color="#6b7280" />
                                 <Text style={styles.detailText}>{customer.phone}</Text>
                             </View>
-
-                            {!!customer.email && (
-                                <View style={styles.detailRow}>
-                                    <MaterialCommunityIcons name="email" size={20} color="#6b7280" />
-                                    <Text style={styles.detailText}>{customer.email}</Text>
-                                </View>
-                            )}
 
                             <View style={styles.detailRow}>
                                 <MaterialCommunityIcons name="calendar" size={20} color="#6b7280" />

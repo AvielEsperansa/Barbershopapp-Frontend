@@ -1,6 +1,7 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
+import * as Haptics from 'expo-haptics'
 import { router } from 'expo-router'
-import React, { useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import {
     Alert,
     Pressable,
@@ -24,7 +25,7 @@ export default function BarberProfile() {
     }, [])
 
     const handleImageUploaded = async (newImageUrl) => {
-        setUser(prevUser => ({
+        setUser((prevUser) => ({
             ...prevUser,
             profileImage: newImageUrl
         }))
@@ -33,44 +34,27 @@ export default function BarberProfile() {
 
     const fetchMe = async () => {
         try {
-            console.log('🔍 Fetching user profile...')
-            console.log('🌐 URL:', `${config.BASE_URL}/users/profile`)
             const response = await apiClient.get(`${config.BASE_URL}/users/profile`)
-            console.log('📡 Response status:', response.status)
+            const text = await response.text()
+            let data
+            try {
+                data = JSON.parse(text)
+            } catch (e) {
+                // Parse error
+            }
 
-            if (response.ok) {
-                const data = await response.json()
-                console.log('✅ Profile data received:', data)
-                console.log('🖼️ Profile image URL:', data.user?.profileImage)
-                // הבקנד מחזיר { user: {...} }
+            if (response.ok && data) {
                 setUser(data.user)
-            } else {
-                console.error('❌ Failed to fetch user data:', response.status)
-                try {
-                    const errorText = await response.text()
-                    console.error('❌ Error response:', errorText)
-                } catch (parseError) {
-                    console.error('❌ Could not parse error response:', parseError)
-                }
-
-                // אם זה 404, זה יכול להיות שהנתיב לא נכון
-                if (response.status === 404) {
-                    console.error('❌ 404 - Route not found. Check if the backend route exists.')
-                }
             }
         } catch (error) {
             console.error('❌ Error fetching user data:', error)
-            console.error('❌ Error details:', {
-                message: error.message,
-                stack: error.stack,
-                name: error.name
-            })
         } finally {
             setLoading(false)
         }
     }
 
     const onLogout = () => {
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
         Alert.alert(
             'התנתקות',
             'האם אתה בטוח שברצונך להתנתק?',
@@ -81,11 +65,10 @@ export default function BarberProfile() {
                     style: 'destructive',
                     onPress: async () => {
                         try {
-                            await tokenManager.clearTokens()
-                            router.replace('/(auth)')
+                            await tokenManager.clearTokens();
+                            router.replace('/(auth)');
                         } catch (error) {
-                            console.error('Logout error:', error)
-                            router.replace('/(auth)')
+                            router.replace('/(auth)');
                         }
                     }
                 }
@@ -97,8 +80,8 @@ export default function BarberProfile() {
         return (
             <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
                 <View style={styles.loadingContainer}>
-                    <MaterialCommunityIcons name="refresh" size={48} color="#3b82f6" />
-                    <Text style={styles.loadingText}>טוען פרטי משתמש...</Text>
+                    <MaterialCommunityIcons name="refresh" size={40} color="#2563eb" />
+                    <Text style={styles.loadingText}>טוען פרופיל ספר...</Text>
                 </View>
             </SafeScreen>
         )
@@ -110,83 +93,94 @@ export default function BarberProfile() {
                 <View style={styles.errorContainer}>
                     <MaterialCommunityIcons name="alert-circle" size={48} color="#ef4444" />
                     <Text style={styles.errorText}>לא ניתן לטעון את הפרופיל</Text>
-                    <Text style={styles.errorSubtext}>אנא בדוק את החיבור שלך ונסה שוב</Text>
-                    <Text style={styles.errorSubtext}>URL: {config.BASE_URL}/users/profile</Text>
-                    <Text style={styles.errorSubtext}>אם הבעיה נמשכת, בדוק שהשרת רץ</Text>
-                    <Text style={styles.errorSubtext}>ואת הנתיב /users/profile בבקנד</Text>
                     <Pressable style={styles.retryButton} onPress={fetchMe}>
                         <Text style={styles.retryButtonText}>נסה שוב</Text>
                     </Pressable>
+                    <Row
+                        icon="logout"
+                        title="התנתקות"
+                        subtitle="חזרה לדף ההתחברות"
+                        danger
+                        onPress={onLogout} />
                 </View>
             </SafeScreen>
         )
     }
 
     return (
-        <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#f8fafc" statusBarStyle="dark">
             <ScrollView
                 style={styles.container}
                 contentContainerStyle={styles.content}
             >
-                {/* Header */}
-                <View style={styles.header}>
+                {/* Header Card */}
+                <View style={styles.headerCard}>
                     <ImageUploader
-                        currentImage={user?.profileImage}
+                        currentImage={user?.profileImageData?.url || user?.profileImage}
                         onImageUploaded={handleImageUploaded}
-                        size={96}
+                        size={100}
                         showOverlay={true}
                         fileFieldName="profileImage"
                         uploadEndpoint="/users/upload-profile-image"
-                        placeholderText="הוסף תמונת פרופיל"
+                        placeholderText="תמונת ספר"
                     />
-                    <Text style={styles.name}>{user.firstName || 'שם לא זמין'}</Text>
-                    <Text style={styles.email}>{user.email || 'אימייל לא זמין'}</Text>
-                    <Text style={styles.role}>ברבר מקצועי</Text>
+                    <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
+                    <View style={styles.badgeRow}>
+                        <View style={styles.roleBadge}>
+                            <MaterialCommunityIcons name="scissors-cutting" size={14} color="#2563eb" />
+                            <Text style={styles.roleBadgeText}>ספר מורשה</Text>
+                        </View>
+                        {!!user.phone && (
+                            <View style={styles.phoneBadge}>
+                                <MaterialCommunityIcons name="phone" size={13} color="#475569" />
+                                <Text style={styles.phoneBadgeText}>{user.phone}</Text>
+                            </View>
+                        )}
+                    </View>
                 </View>
 
                 {/* Personal Info Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>מידע אישי</Text>
                     <Row
-                        icon="account"
+                        icon="account-edit"
                         title="עריכת פרטים"
-                        subtitle={'שם, אימייל, טלפון'}
+                        subtitle="שם ותמונה"
                         onPress={() => router.push("/editProfile")} />
-
                 </View>
 
                 {/* Professional Info Section */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>מידע מקצועי</Text>
                     <Row
-                        icon="scissors-cutting"
+                        icon="content-cut"
                         title="תספורות שבוצעו"
-                        subtitle="צפה בהיסטוריית תספורות"
+                        subtitle="היסטוריית תורים שבוצעו במספרה"
                         onPress={() => router.push("/haircutHistory")} />
                     <Row
                         icon="star"
-                        title="דירוגים"
-                        subtitle="צפה בביקורות לקוחות"
+                        title="דירוגים וביקורות"
+                        subtitle="חוות דעת של לקוחות"
                         onPress={() => router.push("/barberRatings")} />
                 </View>
 
                 {/* Actions Section */}
                 <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>פעולות</Text>
+                    <Text style={styles.sectionTitle}>הגדרות ופעולות</Text>
                     <Row
                         icon="shield-lock"
                         title="הגדרות אבטחה"
-                        subtitle="שנה סיסמה והגדרות"
+                        subtitle="ניהול חשבון"
                         onPress={() => router.push("/security")} />
                     <Row
                         icon="help-circle"
                         title="עזרה ותמיכה"
-                        subtitle="צור קשר עם התמיכה"
+                        subtitle="פנייה לתמיכה טכנית"
                         onPress={() => router.push("/help")} />
                     <Row
                         icon="logout"
                         title="התנתקות"
-                        subtitle="חזרה לדף ההתחברות"
+                        subtitle="חזרה למסך ההתחברות"
                         danger
                         onPress={onLogout} />
                 </View>
@@ -195,17 +189,28 @@ export default function BarberProfile() {
     )
 }
 
-// Row Component
 function Row({ icon, title, subtitle, onPress, danger = false }) {
     return (
-        <Pressable style={styles.row} onPress={onPress}>
+        <Pressable
+            style={({ pressed }) => [
+                styles.row,
+                danger && styles.rowDanger,
+                pressed && { backgroundColor: danger ? '#fee2e2' : '#f1f5f9' }
+            ]}
+            onPress={() => {
+                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                onPress()
+            }}
+        >
             <View style={styles.rowLeft}>
-                <MaterialCommunityIcons
-                    name={icon}
-                    size={24}
-                    color={danger ? '#ef4444' : '#6b7280'}
-                />
-                <View>
+                <View style={[styles.rowIconCircle, danger && styles.rowIconCircleDanger]}>
+                    <MaterialCommunityIcons
+                        name={icon}
+                        size={20}
+                        color={danger ? '#dc2626' : '#2563eb'}
+                    />
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
                     <Text style={[styles.rowTitle, danger && styles.rowTitleDanger]}>
                         {title}
                     </Text>
@@ -214,8 +219,8 @@ function Row({ icon, title, subtitle, onPress, danger = false }) {
             </View>
             <MaterialCommunityIcons
                 name="chevron-left"
-                size={24}
-                color="#9ca3af"
+                size={20}
+                color={danger ? '#dc2626' : '#94a3b8'}
             />
         </Pressable>
     )
@@ -239,8 +244,9 @@ const styles = StyleSheet.create({
         gap: 16
     },
     loadingText: {
-        fontSize: 18,
-        color: '#6b7280'
+        fontSize: 16,
+        color: '#64748b',
+        fontWeight: '500'
     },
     errorContainer: {
         flex: 1,
@@ -255,64 +261,95 @@ const styles = StyleSheet.create({
         color: '#ef4444',
         textAlign: 'center'
     },
-    errorSubtext: {
-        fontSize: 14,
-        color: '#6b7280',
-        marginBottom: 8,
-        textAlign: 'center'
-    },
     retryButton: {
-        backgroundColor: '#3b82f6',
+        backgroundColor: '#2563eb',
         paddingHorizontal: 20,
         paddingVertical: 12,
-        borderRadius: 8
+        borderRadius: 12
     },
     retryButtonText: {
         color: '#ffffff',
         fontSize: 16,
         fontWeight: '600'
     },
-    header: {
+    headerCard: {
         alignItems: 'center',
-        gap: 8,
+        gap: 10,
         paddingVertical: 24,
-        backgroundColor: '#fff',
-        borderRadius: 16,
+        paddingHorizontal: 20,
+        backgroundColor: '#ffffff',
+        borderRadius: 24,
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: '#e2e8f0',
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 3,
     },
     name: {
-        fontSize: 20,
-        fontWeight: '700',
-        color: '#111827'
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#0f172a'
     },
-    email: {
-        color: '#6b7280'
+    badgeRow: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 2,
     },
-    role: {
-        fontSize: 16,
-        fontWeight: '600',
-        color: '#3b82f6',
-        backgroundColor: '#eff6ff',
-        paddingHorizontal: 12,
+    roleBadge: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: '#dbeafe',
+        paddingHorizontal: 10,
         paddingVertical: 4,
-        borderRadius: 20
+        borderRadius: 20,
+        borderWidth: 1,
+        borderColor: '#bfdbfe',
+    },
+    roleBadgeText: {
+        fontSize: 12,
+        fontWeight: 'bold',
+        color: '#1d4ed8',
+    },
+    phoneBadge: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: '#f1f5f9',
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 20,
+    },
+    phoneBadgeText: {
+        fontSize: 12,
+        fontWeight: '600',
+        color: '#475569',
     },
     section: {
-        backgroundColor: '#fff',
-        borderRadius: 16,
+        backgroundColor: '#ffffff',
+        borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
-        overflow: 'hidden'
+        borderColor: '#e2e8f0',
+        overflow: 'hidden',
+        shadowColor: '#0f172a',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 6,
+        elevation: 2,
     },
     sectionTitle: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: '#6b7280',
+        fontSize: 13,
+        fontWeight: 'bold',
+        color: '#64748b',
         paddingHorizontal: 16,
-        paddingTop: 12,
+        paddingTop: 14,
         paddingBottom: 8,
-        textAlign: 'right'
+        textAlign: 'right',
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     row: {
         paddingHorizontal: 16,
@@ -321,22 +358,41 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6'
+        borderTopColor: '#f1f5f9'
     },
     rowLeft: {
         flexDirection: 'row-reverse',
         alignItems: 'center',
-        gap: 10
+        gap: 12
+    },
+    rowIconCircle: {
+        width: 36,
+        height: 36,
+        borderRadius: 18,
+        backgroundColor: '#eff6ff',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    rowIconCircleDanger: {
+        backgroundColor: '#fef2f2',
     },
     rowTitle: {
-        color: '#111827',
-        fontWeight: '600'
+        color: '#0f172a',
+        fontSize: 15,
+        fontWeight: '600',
+        textAlign: 'right'
     },
     rowTitleDanger: {
-        color: '#ef4444'
+        color: '#dc2626',
+        textAlign: 'right'
     },
     rowSubtitle: {
-        color: '#6b7280',
-        fontSize: 14
+        color: '#64748b',
+        fontSize: 12,
+        textAlign: 'right',
+        marginTop: 1,
+    },
+    rowDanger: {
+        backgroundColor: '#fff5f5'
     }
 })

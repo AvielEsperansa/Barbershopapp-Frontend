@@ -19,7 +19,7 @@ export default function _layout() {
                 }}
             >
                 <Tabs.Screen name="index" options={{
-                    title: "Dashboard",
+                    title: "בית",
                     tabBarIcon: ({ color, size }) => (
                         <MaterialCommunityIcons name="home" color={color} size={size} />
                     ),
@@ -28,7 +28,7 @@ export default function _layout() {
                 <Tabs.Screen
                     name="customerAppointment"
                     options={{
-                        title: "Appointments",
+                        title: "תורים",
                         tabBarIcon: ({ color, size }) => (
                             <MaterialCommunityIcons name="calendar" color={color} size={size} />
                         ),
@@ -40,7 +40,7 @@ export default function _layout() {
                     })}
                 />
                 <Tabs.Screen name="customerProfile" options={{
-                    title: "Profile",
+                    title: "פרופיל",
                     tabBarIcon: ({ color, size }) => (
                         <MaterialCommunityIcons name="account" color={color} size={size} />
                     ),

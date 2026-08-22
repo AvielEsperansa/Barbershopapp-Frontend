@@ -29,6 +29,7 @@ export default function Appointments() {
     // Working Hours State
     const [workingHours, setWorkingHours] = useState({})
     const [workingHoursLoading, setWorkingHoursLoading] = useState(false)
+    const [bookingWindowDays, setBookingWindowDays] = useState(30)
 
     // Day Offs State
     const [dayOffs, setDayOffs] = useState([])
@@ -67,6 +68,9 @@ export default function Appointments() {
                 if (response.ok) {
                     const data = await response.json()
                     setBarberId(data.user._id)
+                    if (data.user.bookingWindowDays) {
+                        setBookingWindowDays(data.user.bookingWindowDays)
+                    }
                 }
             } catch (error) {
                 console.error('Error loading profile:', error)
@@ -180,8 +184,13 @@ export default function Appointments() {
                 workingHours: workingHoursArray
             })
 
+            // Save booking window setting to profile
+            await apiClient.put(`${config.BASE_URL}/users/profile`, {
+                bookingWindowDays
+            })
+
             if (response.ok) {
-                Alert.alert('הצלחה', 'שעות העבודה נשמרו בהצלחה')
+                Alert.alert('הצלחה', 'שעות העבודה והגדרות פתיחת התורים נשמרו בהצלחה')
             } else {
                 const errorData = await response.json().catch(() => ({}))
                 const errorMsg = errorData.error || errorData.message || `שגיאה (${response.status})`
@@ -804,6 +813,40 @@ export default function Appointments() {
 
                     {activeTab === 'workingHours' && (
                         <View style={styles.tabContent}>
+                            {/* Booking Window Selection */}
+                            <View style={styles.windowCard}>
+                                <Text style={styles.windowTitle}>📅 פתיחת תורים קדימה ללקוחות</Text>
+                                <Text style={styles.windowSubtitle}>בחר לכמה זמן קדימה יוכלו לקוחות לקבוע תורים:</Text>
+                                <View style={styles.windowOptionsRow}>
+                                    <Pressable
+                                        style={[styles.windowOptionPill, bookingWindowDays === 7 && styles.windowOptionPillSelected]}
+                                        onPress={() => setBookingWindowDays(7)}
+                                    >
+                                        <Text style={[styles.windowOptionText, bookingWindowDays === 7 && styles.windowOptionTextSelected]}>
+                                            שבוע (7 ימים)
+                                        </Text>
+                                    </Pressable>
+
+                                    <Pressable
+                                        style={[styles.windowOptionPill, bookingWindowDays === 14 && styles.windowOptionPillSelected]}
+                                        onPress={() => setBookingWindowDays(14)}
+                                    >
+                                        <Text style={[styles.windowOptionText, bookingWindowDays === 14 && styles.windowOptionTextSelected]}>
+                                            שבועיים (14 ימים)
+                                        </Text>
+                                    </Pressable>
+
+                                    <Pressable
+                                        style={[styles.windowOptionPill, bookingWindowDays === 30 && styles.windowOptionPillSelected]}
+                                        onPress={() => setBookingWindowDays(30)}
+                                    >
+                                        <Text style={[styles.windowOptionText, bookingWindowDays === 30 && styles.windowOptionTextSelected]}>
+                                            חודש (30 ימים)
+                                        </Text>
+                                    </Pressable>
+                                </View>
+                            </View>
+
                             <View style={styles.section}>
                                 <View style={styles.sectionHeader}>
                                     <Text style={styles.sectionTitle}>שעות עבודה שבועיות</Text>
@@ -1828,5 +1871,55 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '600',
         color: '#ffffff'
-    }
+    },
+    windowCard: {
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
+        padding: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#e5e7eb',
+        gap: 8,
+    },
+    windowTitle: {
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#111827',
+        textAlign: 'right',
+    },
+    windowSubtitle: {
+        fontSize: 13,
+        color: '#6b7280',
+        textAlign: 'right',
+        marginBottom: 6,
+    },
+    windowOptionsRow: {
+        flexDirection: 'row-reverse',
+        gap: 8,
+        justifyContent: 'space-between',
+    },
+    windowOptionPill: {
+        flex: 1,
+        paddingVertical: 12,
+        paddingHorizontal: 6,
+        borderRadius: 12,
+        backgroundColor: '#f3f4f6',
+        borderWidth: 1.5,
+        borderColor: '#e5e7eb',
+        alignItems: 'center',
+    },
+    windowOptionPillSelected: {
+        backgroundColor: '#eff6ff',
+        borderColor: '#3b82f6',
+    },
+    windowOptionText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#4b5563',
+        textAlign: 'center',
+    },
+    windowOptionTextSelected: {
+        color: '#3b82f6',
+        fontWeight: 'bold',
+    },
 })
