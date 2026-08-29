@@ -600,7 +600,7 @@ export default function Appointments() {
     }
 
     return (
-        <SafeScreen backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#0f172a" statusBarStyle="light">
             <View style={styles.container}>
                 {/* Header */}
                 <View style={styles.header}>
@@ -655,7 +655,11 @@ export default function Appointments() {
                 </View>
 
                 {/* Content */}
-                <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+                <ScrollView
+                    style={styles.content}
+                    contentContainerStyle={{ paddingBottom: 130 }}
+                    showsVerticalScrollIndicator={false}
+                >
                     {activeTab === 'appointments' && (
                         <View style={styles.tabContent}>
                             {/* תורים היום */}
@@ -1293,38 +1297,38 @@ export default function Appointments() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#0f172a'
     },
     header: {
         alignItems: 'center',
         paddingVertical: 24,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1e293b',
         marginHorizontal: 16,
         marginBottom: 16,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: 'rgba(59, 130, 246, 0.12)'
     },
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#111827',
+        color: '#f1f5f9',
         marginTop: 12,
         marginBottom: 4
     },
     subtitle: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#64748b',
         textAlign: 'center'
     },
     tabsContainer: {
         flexDirection: 'row',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1e293b',
         marginHorizontal: 16,
         marginBottom: 16,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(255, 255, 255, 0.06)',
         overflow: 'hidden'
     },
     tab: {
@@ -1337,14 +1341,14 @@ const styles = StyleSheet.create({
         paddingHorizontal: 8
     },
     activeTab: {
-        backgroundColor: '#eff6ff',
+        backgroundColor: 'rgba(59, 130, 246, 0.15)',
         borderBottomWidth: 2,
         borderBottomColor: '#3b82f6'
     },
     tabText: {
         fontSize: 14,
         fontWeight: '500',
-        color: '#6b7280',
+        color: '#64748b',
         textAlign: 'right'
     },
     activeTabText: {
@@ -1357,14 +1361,16 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16
     },
     tabContent: {
-        flex: 1
+        flex: 1,
+        gap: 16
     },
     section: {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1e293b',
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
-        overflow: 'hidden'
+        borderColor: 'rgba(255, 255, 255, 0.06)',
+        overflow: 'hidden',
+        marginBottom: 16
     },
     sectionHeader: {
         flexDirection: 'row-reverse',
@@ -1376,7 +1382,7 @@ const styles = StyleSheet.create({
     sectionTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#111827',
+        color: '#e2e8f0',
         padding: 16,
         paddingBottom: 8,
         textAlign: 'right'
@@ -1431,12 +1437,12 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 18,
-        color: '#6b7280',
+        color: '#64748b',
         textAlign: 'right'
     },
     emptySubtext: {
         fontSize: 14,
-        color: '#9ca3af',
+        color: '#475569',
         textAlign: 'right'
     },
     loadingState: {
@@ -1452,7 +1458,7 @@ const styles = StyleSheet.create({
     dayCard: {
         padding: 16,
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6',
+        borderTopColor: 'rgba(255, 255, 255, 0.04)',
         gap: 12
     },
     dayHeader: {
@@ -1468,7 +1474,7 @@ const styles = StyleSheet.create({
     dayName: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#111827',
+        color: '#e2e8f0',
         textAlign: 'right'
     },
     timeInputs: {
@@ -1481,18 +1487,18 @@ const styles = StyleSheet.create({
     },
     timeLabel: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#94a3b8',
         flex: 1,
         textAlign: 'right'
     },
     timeInput: {
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
         borderRadius: 8,
         paddingHorizontal: 12,
         paddingVertical: 8,
         fontSize: 14,
-        color: '#111827',
+        color: '#e2e8f0',
         textAlign: 'center',
         width: 80
     },
@@ -1501,16 +1507,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 6,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(255, 255, 255, 0.1)',
         borderRadius: 8,
         paddingHorizontal: 12,
         paddingVertical: 8,
-        backgroundColor: '#f9fafb',
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
         minWidth: 80
     },
     timeButtonText: {
         fontSize: 14,
-        color: '#111827',
+        color: '#e2e8f0',
         fontWeight: '500'
     },
     saveButton: {
@@ -1532,7 +1538,7 @@ const styles = StyleSheet.create({
     dayOffCard: {
         padding: 16,
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6',
+        borderTopColor: 'rgba(255, 255, 255, 0.04)',
         gap: 12
     },
     dayOffHeader: {
@@ -1548,11 +1554,11 @@ const styles = StyleSheet.create({
     dayOffDate: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#111827',
+        color: '#e2e8f0',
         textAlign: 'right'
     },
     dayOffType: {
-        backgroundColor: '#eff6ff',
+        backgroundColor: 'rgba(59, 130, 246, 0.15)',
         paddingHorizontal: 8,
         paddingVertical: 4,
         borderRadius: 12
@@ -1573,7 +1579,7 @@ const styles = StyleSheet.create({
     },
     detailText: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#94a3b8',
         textAlign: 'right'
     },
     dayOffActions: {
@@ -1587,9 +1593,9 @@ const styles = StyleSheet.create({
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 6,
-        backgroundColor: '#fef2f2',
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
         borderWidth: 1,
-        borderColor: '#fecaca'
+        borderColor: 'rgba(239, 68, 68, 0.25)'
     },
     deleteButtonText: {
         fontSize: 12,
@@ -1601,12 +1607,12 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#0f172a'
     },
     timePickerContainer: {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1e293b',
         borderTopWidth: 1,
-        borderTopColor: '#e5e7eb',
+        borderTopColor: 'rgba(59, 130, 246, 0.12)',
         paddingVertical: 16,
         alignItems: 'center',
         position: 'absolute',
@@ -1626,7 +1632,7 @@ const styles = StyleSheet.create({
     timePickerTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#111827',
+        color: '#e2e8f0',
         textAlign: 'right'
     },
     closeButton: {
@@ -1641,11 +1647,11 @@ const styles = StyleSheet.create({
         gap: 12
     },
     appointmentCard: {
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#1e293b',
         borderRadius: 12,
         padding: 16,
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: 'rgba(255, 255, 255, 0.06)'
     },
     appointmentHeader: {
         flexDirection: 'row',
@@ -1664,7 +1670,7 @@ const styles = StyleSheet.create({
     appointmentTime: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#111827'
+        color: '#f1f5f9'
     },
     statusBadge: {
         paddingHorizontal: 8,
@@ -1682,12 +1688,12 @@ const styles = StyleSheet.create({
     customerName: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#111827',
+        color: '#e2e8f0',
         textAlign: 'right'
     },
     serviceText: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#94a3b8',
         textAlign: 'right'
     },
     priceText: {
@@ -1739,13 +1745,13 @@ const styles = StyleSheet.create({
     // Modal styles
     modalOverlay: {
         flex: 1,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backgroundColor: 'rgba(0, 0, 0, 0.7)',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 20
     },
     modalContent: {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1e293b',
         borderRadius: 16,
         padding: 20,
         width: '100%',
@@ -1760,13 +1766,13 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#1f2937'
+        color: '#f1f5f9'
     },
     modalCloseButton: {
         padding: 4
     },
     appointmentInfo: {
-        backgroundColor: '#f3f4f6',
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
         borderRadius: 8,
         padding: 12,
         marginBottom: 20
@@ -1774,7 +1780,7 @@ const styles = StyleSheet.create({
     customerInfo: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1f2937',
+        color: '#e2e8f0',
         marginBottom: 4
     },
     serviceInfo: {
@@ -1789,7 +1795,7 @@ const styles = StyleSheet.create({
     timeSelectionTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#1f2937',
+        color: '#e2e8f0',
         marginBottom: 12
     },
     loadingTimesContainer: {
@@ -1822,7 +1828,7 @@ const styles = StyleSheet.create({
         gap: 8
     },
     timeOption: {
-        backgroundColor: '#f3f4f6',
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
         borderRadius: 8,
         paddingHorizontal: 12,
         paddingVertical: 8,
@@ -1854,7 +1860,7 @@ const styles = StyleSheet.create({
         alignItems: 'center'
     },
     cancelModalButton: {
-        backgroundColor: '#f3f4f6'
+        backgroundColor: 'rgba(255, 255, 255, 0.06)'
     },
     confirmModalButton: {
         backgroundColor: '#3b82f6'
@@ -1873,23 +1879,23 @@ const styles = StyleSheet.create({
         color: '#ffffff'
     },
     windowCard: {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1e293b',
         borderRadius: 16,
         padding: 16,
         marginBottom: 16,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(255, 255, 255, 0.06)',
         gap: 8,
     },
     windowTitle: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#111827',
+        color: '#e2e8f0',
         textAlign: 'right',
     },
     windowSubtitle: {
         fontSize: 13,
-        color: '#6b7280',
+        color: '#94a3b8',
         textAlign: 'right',
         marginBottom: 6,
     },
@@ -1903,19 +1909,19 @@ const styles = StyleSheet.create({
         paddingVertical: 12,
         paddingHorizontal: 6,
         borderRadius: 12,
-        backgroundColor: '#f3f4f6',
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
         borderWidth: 1.5,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(255, 255, 255, 0.08)',
         alignItems: 'center',
     },
     windowOptionPillSelected: {
-        backgroundColor: '#eff6ff',
+        backgroundColor: 'rgba(59, 130, 246, 0.15)',
         borderColor: '#3b82f6',
     },
     windowOptionText: {
         fontSize: 13,
         fontWeight: '600',
-        color: '#4b5563',
+        color: '#94a3b8',
         textAlign: 'center',
     },
     windowOptionTextSelected: {

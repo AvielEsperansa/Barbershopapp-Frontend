@@ -1,23 +1,24 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import * as Haptics from 'expo-haptics'
-import { router, useFocusEffect } from 'expo-router'
-import React, { useState } from 'react'
+import { router, useLocalSearchParams } from 'expo-router'
+import React, { useEffect, useState } from 'react'
 import { Alert, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native'
 import config from '../../config'
 import apiClient from '../../lib/apiClient'
 import tokenManager from '../../lib/tokenManager'
+import ActiveLoader from '../components/ActiveLoader'
 import ImageUploader from '../components/ImageUploader'
-import SafeScreen from '../components/SafeScreen'
 
 export default function CustomerProfile() {
-    const [loading, setLoading] = useState(false)
+    const [loading, setLoading] = useState(true)
     const [user, setUser] = useState(null)
     const [completedCount, setCompletedCount] = useState(0)
-    const tabBarHeight = useBottomTabBarHeight();
+    const tabBarHeight = useBottomTabBarHeight()
+    const { refreshed } = useLocalSearchParams()
 
-    const fetchMe = React.useCallback(async () => {
-        setLoading(true)
+    const fetchMe = React.useCallback(async (showLoading = false) => {
+        if (showLoading) setLoading(true)
         try {
             const url = `${config.BASE_URL}/users/profile`
             const res = await apiClient.get(url)
@@ -45,11 +46,17 @@ export default function CustomerProfile() {
         }
     }, [])
 
-    useFocusEffect(
-        React.useCallback(() => {
-            fetchMe()
-        }, [fetchMe])
-    )
+    // טעינה ראשונית בלבד
+    useEffect(() => {
+        fetchMe(true)
+    }, [fetchMe])
+
+    // ריענון רק כאשר חזרנו לאחר שמירה מוצלחת בעריכת פרטים
+    useEffect(() => {
+        if (refreshed) {
+            fetchMe(false)
+        }
+    }, [refreshed, fetchMe])
 
     const fullName = () => {
         if (!user) return 'אורח'
@@ -115,12 +122,14 @@ export default function CustomerProfile() {
 
     if (loading) {
         return (
-            <View style={styles.loadingContainer}>
-                <View style={styles.loadingSpinner}>
-                    <MaterialCommunityIcons name="refresh" size={40} color="#2563eb" />
-                </View>
-                <Text style={styles.loadingText}>טוען פרופיל משתמש...</Text>
-            </View>
+            <ActiveLoader
+                message="טוען פרופיל משתמש..."
+                subMessage="שולף את הנתונים וההטבות שלך..."
+                icon="account-circle"
+                backgroundColor="#f8fafc"
+                statusBarStyle="dark"
+                accentColor="#2563eb"
+            />
         )
     }
 
@@ -134,86 +143,86 @@ export default function CustomerProfile() {
     }
 
     return (
-        <SafeScreen backgroundColor="#f8fafc" statusBarStyle="dark">
-            <ScrollView contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 20 }]}>
-                {/* Profile Card Header */}
-                <View style={styles.headerCard}>
-                    <ImageUploader
-                        currentImage={user?.profileImageData?.url}
-                        onImageUploaded={handleImageUploaded}
-                        size={100}
-                        showOverlay={false}
-                        fileFieldName="profileImage"
-                        uploadEndpoint="/users/upload-profile-image"
-                        placeholderText="הוסף תמונה"
-                    />
-                    <Text style={styles.name}>{fullName()}</Text>
-                    <View style={styles.badgeRow}>
-                        {completedCount >= 5 ? (
-                            <View style={styles.vipBadge}>
-                                <MaterialCommunityIcons name="crown" size={14} color="#d97706" />
-                                <Text style={styles.vipBadgeText}>לקוח VIP ({completedCount} תספורות)</Text>
-                            </View>
-                        ) : (
-                            <View style={styles.regularBadge}>
-                                <MaterialCommunityIcons name="account-check" size={14} color="#2563eb" />
-                                <Text style={styles.regularBadgeText}>עוד {5 - completedCount} תספורות ל-VIP</Text>
-                            </View>
-                        )}
-                        {!!user.phone && (
-                            <View style={styles.phoneBadge}>
-                                <MaterialCommunityIcons name="phone" size={13} color="#475569" />
-                                <Text style={styles.phoneBadgeText}>{user.phone}</Text>
-                            </View>
-                        )}
-                    </View>
+        // <SafeScreen backgroundColor="#f8fafc" statusBarStyle="dark">
+        <ScrollView style={{ backgroundColor: "#f8fafc" }} contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 20 }]}>
+            {/* Profile Card Header */}
+            <View style={styles.headerCard}>
+                <ImageUploader
+                    currentImage={user?.profileImageData?.url}
+                    onImageUploaded={handleImageUploaded}
+                    size={100}
+                    showOverlay={false}
+                    fileFieldName="profileImage"
+                    uploadEndpoint="/users/upload-profile-image"
+                    placeholderText="הוסף תמונה"
+                />
+                <Text style={styles.name}>{fullName()}</Text>
+                <View style={styles.badgeRow}>
+                    {completedCount >= 5 ? (
+                        <View style={styles.vipBadge}>
+                            <MaterialCommunityIcons name="crown" size={14} color="#d97706" />
+                            <Text style={styles.vipBadgeText}>לקוח VIP ({completedCount} תספורות)</Text>
+                        </View>
+                    ) : (
+                        <View style={styles.regularBadge}>
+                            <MaterialCommunityIcons name="account-check" size={14} color="#2563eb" />
+                            <Text style={styles.regularBadgeText}>עוד {5 - completedCount} תספורות ל-VIP</Text>
+                        </View>
+                    )}
+                    {!!user.phone && (
+                        <View style={styles.phoneBadge}>
+                            <MaterialCommunityIcons name="phone" size={13} color="#475569" />
+                            <Text style={styles.phoneBadgeText}>{user.phone}</Text>
+                        </View>
+                    )}
                 </View>
+            </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>הפרופיל שלי</Text>
-                    <Row
-                        icon="account-edit"
-                        title="עריכת פרטים"
-                        subtitle="שם ותמונה"
-                        onPress={() => router.push("/editProfile")} />
-                    <Row
-                        icon="shield-lock"
-                        title="אבטחה"
-                        subtitle="אימות והגדרות חשבון"
-                        onPress={() => router.push("/security")} />
-                    <Row
-                        icon="bell"
-                        title="הגדרות התראות"
-                        subtitle="ניהול התראות SMS ופוש"
-                        onPress={() => router.push("/notificationSettings")} />
-                </View>
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>הפרופיל שלי</Text>
+                <Row
+                    icon="account-edit"
+                    title="עריכת פרטים"
+                    subtitle="שם ותמונה"
+                    onPress={() => router.push("/editProfile")} />
+                <Row
+                    icon="shield-lock"
+                    title="אבטחה"
+                    subtitle="אימות והגדרות חשבון"
+                    onPress={() => router.push("/security")} />
+                <Row
+                    icon="bell"
+                    title="הגדרות התראות"
+                    subtitle="ניהול התראות SMS ופוש"
+                    onPress={() => router.push("/notificationSettings")} />
+            </View>
 
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>פעולות ותורים</Text>
-                    <Row
-                        icon="calendar-clock"
-                        title="התורים שלי"
-                        subtitle="תורים קרובים"
-                        onPress={() => router.push("/myAppointments")} />
-                    <Row
-                        icon="scissors-cutting"
-                        title="היסטוריית תספורות"
-                        subtitle="תורים קודמים"
-                        onPress={() => router.push("/haircutHistory")} />
-                    <Row
-                        icon="help-circle"
-                        title="עזרה ותמיכה"
-                        subtitle="צור קשר עם המספרה"
-                        onPress={() => router.push("/help")} />
-                    <Row
-                        icon="logout"
-                        title="התנתקות"
-                        subtitle="יציאה מהחשבון"
-                        danger
-                        onPress={onLogout} />
-                </View>
-            </ScrollView>
-        </SafeScreen>
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>פעולות ותורים</Text>
+                <Row
+                    icon="calendar-clock"
+                    title="התורים שלי"
+                    subtitle="תורים קרובים"
+                    onPress={() => router.push("/myAppointments")} />
+                <Row
+                    icon="scissors-cutting"
+                    title="היסטוריית תספורות"
+                    subtitle="תורים קודמים"
+                    onPress={() => router.push("/haircutHistory")} />
+                <Row
+                    icon="help-circle"
+                    title="עזרה ותמיכה"
+                    subtitle="צור קשר עם המספרה"
+                    onPress={() => router.push("/help")} />
+                <Row
+                    icon="logout"
+                    title="התנתקות"
+                    subtitle="יציאה מהחשבון"
+                    danger
+                    onPress={onLogout} />
+            </View>
+        </ScrollView>
+        // </SafeScreen>
     )
 }
 

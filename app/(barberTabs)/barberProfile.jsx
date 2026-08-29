@@ -13,8 +13,8 @@ import {
 import config from '../../config'
 import apiClient from '../../lib/apiClient'
 import tokenManager from '../../lib/tokenManager'
+import ActiveLoader from '../components/ActiveLoader'
 import ImageUploader from '../components/ImageUploader'
-import SafeScreen from '../components/SafeScreen'
 
 export default function BarberProfile() {
     const [user, setUser] = useState(null)
@@ -78,114 +78,116 @@ export default function BarberProfile() {
 
     if (loading) {
         return (
-            <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
-                <View style={styles.loadingContainer}>
-                    <MaterialCommunityIcons name="refresh" size={40} color="#2563eb" />
-                    <Text style={styles.loadingText}>טוען פרופיל ספר...</Text>
-                </View>
-            </SafeScreen>
+            <ActiveLoader
+                message="טוען פרופיל ספר..."
+                subMessage="טוען נתונים והגדרות ניהול..."
+                icon="scissors-cutting"
+                backgroundColor="#0f172a"
+                statusBarStyle="light"
+                accentColor="#3b82f6"
+            />
         )
     }
 
     if (!user) {
         return (
-            <SafeScreen paddingTop={5} backgroundColor="#f8fafc">
-                <View style={styles.errorContainer}>
-                    <MaterialCommunityIcons name="alert-circle" size={48} color="#ef4444" />
-                    <Text style={styles.errorText}>לא ניתן לטעון את הפרופיל</Text>
-                    <Pressable style={styles.retryButton} onPress={fetchMe}>
-                        <Text style={styles.retryButtonText}>נסה שוב</Text>
-                    </Pressable>
-                    <Row
-                        icon="logout"
-                        title="התנתקות"
-                        subtitle="חזרה לדף ההתחברות"
-                        danger
-                        onPress={onLogout} />
-                </View>
-            </SafeScreen>
+            // <SafeScreen paddingTop={5} backgroundColor="#0f172a" statusBarStyle="light">
+            <View style={styles.errorContainer}>
+                <MaterialCommunityIcons name="alert-circle" size={48} color="#ef4444" />
+                <Text style={styles.errorText}>לא ניתן לטעון את הפרופיל</Text>
+                <Pressable style={styles.retryButton} onPress={fetchMe}>
+                    <Text style={styles.retryButtonText}>נסה שוב</Text>
+                </Pressable>
+                <Row
+                    icon="logout"
+                    title="התנתקות"
+                    subtitle="חזרה לדף ההתחברות"
+                    danger
+                    onPress={onLogout} />
+            </View>
+            // </SafeScreen>
         )
     }
 
     return (
-        <SafeScreen backgroundColor="#f8fafc" statusBarStyle="dark">
-            <ScrollView
-                style={styles.container}
-                contentContainerStyle={styles.content}
-            >
-                {/* Header Card */}
-                <View style={styles.headerCard}>
-                    <ImageUploader
-                        currentImage={user?.profileImageData?.url || user?.profileImage}
-                        onImageUploaded={handleImageUploaded}
-                        size={100}
-                        showOverlay={true}
-                        fileFieldName="profileImage"
-                        uploadEndpoint="/users/upload-profile-image"
-                        placeholderText="תמונת ספר"
-                    />
-                    <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
-                    <View style={styles.badgeRow}>
-                        <View style={styles.roleBadge}>
-                            <MaterialCommunityIcons name="scissors-cutting" size={14} color="#2563eb" />
-                            <Text style={styles.roleBadgeText}>ספר מורשה</Text>
-                        </View>
-                        {!!user.phone && (
-                            <View style={styles.phoneBadge}>
-                                <MaterialCommunityIcons name="phone" size={13} color="#475569" />
-                                <Text style={styles.phoneBadgeText}>{user.phone}</Text>
-                            </View>
-                        )}
+        // <SafeScreen backgroundColor="#0f172a" statusBarStyle="light">
+        <ScrollView
+            style={styles.container}
+            contentContainerStyle={styles.content}
+        >
+            {/* Header Card */}
+            <View style={styles.headerCard}>
+                <ImageUploader
+                    currentImage={user?.profileImageData?.url || user?.profileImage}
+                    onImageUploaded={handleImageUploaded}
+                    size={100}
+                    showOverlay={true}
+                    fileFieldName="profileImage"
+                    uploadEndpoint="/users/upload-profile-image"
+                    placeholderText="תמונת ספר"
+                />
+                <Text style={styles.name}>{user.firstName} {user.lastName}</Text>
+                <View style={styles.badgeRow}>
+                    <View style={styles.roleBadge}>
+                        <MaterialCommunityIcons name="scissors-cutting" size={14} color="#3b82f6" />
+                        <Text style={styles.roleBadgeText}>ספר מורשה</Text>
                     </View>
+                    {!!user.phone && (
+                        <View style={styles.phoneBadge}>
+                            <MaterialCommunityIcons name="phone" size={13} color="#94a3b8" />
+                            <Text style={styles.phoneBadgeText}>{user.phone}</Text>
+                        </View>
+                    )}
                 </View>
+            </View>
 
-                {/* Personal Info Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>מידע אישי</Text>
-                    <Row
-                        icon="account-edit"
-                        title="עריכת פרטים"
-                        subtitle="שם ותמונה"
-                        onPress={() => router.push("/editProfile")} />
-                </View>
+            {/* Personal Info Section */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>מידע אישי</Text>
+                <Row
+                    icon="account-edit"
+                    title="עריכת פרטים"
+                    subtitle="שם ותמונה"
+                    onPress={() => router.push("/editProfile")} />
+            </View>
 
-                {/* Professional Info Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>מידע מקצועי</Text>
-                    <Row
-                        icon="content-cut"
-                        title="תספורות שבוצעו"
-                        subtitle="היסטוריית תורים שבוצעו במספרה"
-                        onPress={() => router.push("/haircutHistory")} />
-                    <Row
-                        icon="star"
-                        title="דירוגים וביקורות"
-                        subtitle="חוות דעת של לקוחות"
-                        onPress={() => router.push("/barberRatings")} />
-                </View>
+            {/* Professional Info Section */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>מידע מקצועי</Text>
+                <Row
+                    icon="content-cut"
+                    title="תספורות שבוצעו"
+                    subtitle="היסטוריית תורים שבוצעו במספרה"
+                    onPress={() => router.push("/haircutHistory")} />
+                <Row
+                    icon="star"
+                    title="דירוגים וביקורות"
+                    subtitle="חוות דעת של לקוחות"
+                    onPress={() => router.push("/barberRatings")} />
+            </View>
 
-                {/* Actions Section */}
-                <View style={styles.section}>
-                    <Text style={styles.sectionTitle}>הגדרות ופעולות</Text>
-                    <Row
-                        icon="shield-lock"
-                        title="הגדרות אבטחה"
-                        subtitle="ניהול חשבון"
-                        onPress={() => router.push("/security")} />
-                    <Row
-                        icon="help-circle"
-                        title="עזרה ותמיכה"
-                        subtitle="פנייה לתמיכה טכנית"
-                        onPress={() => router.push("/help")} />
-                    <Row
-                        icon="logout"
-                        title="התנתקות"
-                        subtitle="חזרה למסך ההתחברות"
-                        danger
-                        onPress={onLogout} />
-                </View>
-            </ScrollView>
-        </SafeScreen>
+            {/* Actions Section */}
+            <View style={styles.section}>
+                <Text style={styles.sectionTitle}>הגדרות ופעולות</Text>
+                <Row
+                    icon="shield-lock"
+                    title="הגדרות אבטחה"
+                    subtitle="ניהול חשבון"
+                    onPress={() => router.push("/security")} />
+                <Row
+                    icon="help-circle"
+                    title="עזרה ותמיכה"
+                    subtitle="פנייה לתמיכה טכנית"
+                    onPress={() => router.push("/help")} />
+                <Row
+                    icon="logout"
+                    title="התנתקות"
+                    subtitle="חזרה למסך ההתחברות"
+                    danger
+                    onPress={onLogout} />
+            </View>
+        </ScrollView>
+        // </SafeScreen>
     )
 }
 
@@ -195,7 +197,7 @@ function Row({ icon, title, subtitle, onPress, danger = false }) {
             style={({ pressed }) => [
                 styles.row,
                 danger && styles.rowDanger,
-                pressed && { backgroundColor: danger ? '#fee2e2' : '#f1f5f9' }
+                pressed && { backgroundColor: danger ? 'rgba(220, 38, 38, 0.1)' : 'rgba(59, 130, 246, 0.08)' }
             ]}
             onPress={() => {
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
@@ -207,7 +209,7 @@ function Row({ icon, title, subtitle, onPress, danger = false }) {
                     <MaterialCommunityIcons
                         name={icon}
                         size={20}
-                        color={danger ? '#dc2626' : '#2563eb'}
+                        color={danger ? '#ef4444' : '#3b82f6'}
                     />
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
@@ -220,7 +222,7 @@ function Row({ icon, title, subtitle, onPress, danger = false }) {
             <MaterialCommunityIcons
                 name="chevron-left"
                 size={20}
-                color={danger ? '#dc2626' : '#94a3b8'}
+                color={danger ? '#ef4444' : '#475569'}
             />
         </Pressable>
     )
@@ -229,7 +231,7 @@ function Row({ icon, title, subtitle, onPress, danger = false }) {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#0f172a'
     },
     content: {
         padding: 16,
@@ -240,7 +242,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#0f172a',
         gap: 16
     },
     loadingText: {
@@ -252,7 +254,7 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#0f172a',
         padding: 20,
         gap: 16
     },
@@ -262,7 +264,7 @@ const styles = StyleSheet.create({
         textAlign: 'center'
     },
     retryButton: {
-        backgroundColor: '#2563eb',
+        backgroundColor: '#3b82f6',
         paddingHorizontal: 20,
         paddingVertical: 12,
         borderRadius: 12
@@ -275,22 +277,17 @@ const styles = StyleSheet.create({
     headerCard: {
         alignItems: 'center',
         gap: 10,
-        paddingVertical: 24,
+        paddingVertical: 28,
         paddingHorizontal: 20,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1e293b',
         borderRadius: 24,
         borderWidth: 1,
-        borderColor: '#e2e8f0',
-        shadowColor: '#0f172a',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-        elevation: 3,
+        borderColor: 'rgba(59, 130, 246, 0.15)',
     },
     name: {
-        fontSize: 22,
-        fontWeight: 'bold',
-        color: '#0f172a'
+        fontSize: 24,
+        fontWeight: '800',
+        color: '#f1f5f9'
     },
     badgeRow: {
         flexDirection: 'row-reverse',
@@ -302,54 +299,49 @@ const styles = StyleSheet.create({
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#dbeafe',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+        paddingHorizontal: 12,
+        paddingVertical: 5,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#bfdbfe',
+        borderColor: 'rgba(59, 130, 246, 0.25)',
     },
     roleBadgeText: {
         fontSize: 12,
-        fontWeight: 'bold',
-        color: '#1d4ed8',
+        fontWeight: '700',
+        color: '#3b82f6',
     },
     phoneBadge: {
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#f1f5f9',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
+        paddingHorizontal: 12,
+        paddingVertical: 5,
         borderRadius: 20,
     },
     phoneBadgeText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#475569',
+        color: '#94a3b8',
     },
     section: {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1e293b',
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#e2e8f0',
+        borderColor: 'rgba(255, 255, 255, 0.06)',
         overflow: 'hidden',
-        shadowColor: '#0f172a',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
-        shadowRadius: 6,
-        elevation: 2,
     },
     sectionTitle: {
-        fontSize: 13,
-        fontWeight: 'bold',
+        fontSize: 12,
+        fontWeight: '700',
         color: '#64748b',
         paddingHorizontal: 16,
         paddingTop: 14,
         paddingBottom: 8,
         textAlign: 'right',
         textTransform: 'uppercase',
-        letterSpacing: 0.5,
+        letterSpacing: 0.8,
     },
     row: {
         paddingHorizontal: 16,
@@ -358,7 +350,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         borderTopWidth: 1,
-        borderTopColor: '#f1f5f9'
+        borderTopColor: 'rgba(255, 255, 255, 0.04)'
     },
     rowLeft: {
         flexDirection: 'row-reverse',
@@ -366,24 +358,24 @@ const styles = StyleSheet.create({
         gap: 12
     },
     rowIconCircle: {
-        width: 36,
-        height: 36,
-        borderRadius: 18,
-        backgroundColor: '#eff6ff',
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        backgroundColor: 'rgba(59, 130, 246, 0.12)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     rowIconCircleDanger: {
-        backgroundColor: '#fef2f2',
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
     },
     rowTitle: {
-        color: '#0f172a',
+        color: '#e2e8f0',
         fontSize: 15,
         fontWeight: '600',
         textAlign: 'right'
     },
     rowTitleDanger: {
-        color: '#dc2626',
+        color: '#ef4444',
         textAlign: 'right'
     },
     rowSubtitle: {
@@ -393,6 +385,6 @@ const styles = StyleSheet.create({
         marginTop: 1,
     },
     rowDanger: {
-        backgroundColor: '#fff5f5'
+        backgroundColor: 'rgba(239, 68, 68, 0.04)'
     }
 })

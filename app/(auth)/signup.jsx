@@ -71,6 +71,24 @@ export default function Signup() {
                 throw new Error(data?.error || 'שליחת קוד אימות נכשלה');
             }
 
+            // If phone already registered, offer to log in directly
+            if (data.userExists === true) {
+                Alert.alert(
+                    'מספר כבר רשום',
+                    'מספר הטלפון שהזנת כבר רשום במערכת. האם ברצונך לעבור להתחברות?',
+                    [
+                        { text: 'ביטול', style: 'cancel' },
+                        {
+                            text: 'מעבר להתחברות',
+                            onPress: () => {
+                                router.push('/(auth)/login');
+                            }
+                        }
+                    ]
+                );
+                return;
+            }
+
             // Navigate to OTP verification screen with user details
             router.push({
                 pathname: '/(auth)/otpVerify',

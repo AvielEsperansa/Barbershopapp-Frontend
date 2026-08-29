@@ -79,13 +79,22 @@ export default function EditProfile() {
             if (!res.ok) throw new Error(json?.error || 'Failed to update profile')
 
             if (json.message === 'Profile updated successfully' || json.user) {
-                Alert.alert('הצלחה', 'הפרטים עודכנו בהצלחה')
                 setOriginalValues({
                     firstName,
                     lastName,
                     phone
                 })
-                router.back()
+                Alert.alert('הצלחה', 'הפרטים עודכנו בהצלחה', [
+                    {
+                        text: 'אישור',
+                        onPress: () => {
+                            router.navigate({
+                                pathname: '/(customerTabs)/customerProfile',
+                                params: { refreshed: Date.now().toString() }
+                            })
+                        }
+                    }
+                ])
             } else {
                 throw new Error('Unexpected response format')
             }

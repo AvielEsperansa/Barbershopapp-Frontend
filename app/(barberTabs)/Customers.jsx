@@ -149,27 +149,25 @@ export default function Customers() {
             <TouchableOpacity
                 style={styles.customerCard}
                 onPress={() => viewCustomerHistory(customerData)}
+                activeOpacity={0.7}
             >
                 <View style={styles.customerInfo}>
                     <View style={styles.customerHeader}>
+                        <View style={styles.avatarWrap}>
+                            <MaterialCommunityIcons name="account" size={22} color="#3b82f6" />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.customerName}>{customerName}</Text>
+                            <View style={styles.customerMeta}>
+                                <MaterialCommunityIcons name="phone" size={13} color="#64748b" />
+                                <Text style={styles.metaText}>{customer.phone}</Text>
+                                <View style={styles.metaDivider} />
+                                <MaterialCommunityIcons name="calendar" size={13} color="#64748b" />
+                                <Text style={styles.metaText}>{appointmentsCount} תורים</Text>
+                            </View>
+                        </View>
                         <View style={styles.statusBadge}>
-                            <Text style={styles.statusText}>
-                                פעיל
-                            </Text>
-                        </View>
-                        <Text style={styles.customerName}>{customerName}</Text>
-                    </View>
-
-                    <View style={styles.customerDetails}>
-                        <View style={styles.detailRow}>
-                            <MaterialCommunityIcons name="phone" size={16} color="#6b7280" />
-                            <Text style={styles.detailText}>{customer.phone}</Text>
-                        </View>
-                        <View style={styles.detailRow}>
-                            <MaterialCommunityIcons name="calendar" size={16} color="#6b7280" />
-                            <Text style={styles.detailText}>
-                                {appointmentsCount} תורים
-                            </Text>
+                            <Text style={styles.statusText}>פעיל</Text>
                         </View>
                     </View>
                 </View>
@@ -179,14 +177,14 @@ export default function Customers() {
                         style={styles.actionButton}
                         onPress={() => viewCustomerHistory(customerData)}
                     >
-                        <MaterialCommunityIcons name="history" size={20} color="#3b82f6" />
+                        <MaterialCommunityIcons name="history" size={18} color="#3b82f6" />
                     </TouchableOpacity>
 
                     <TouchableOpacity
-                        style={styles.actionButton}
+                        style={[styles.actionButton, { borderColor: 'rgba(37, 211, 102, 0.2)' }]}
                         onPress={() => openWhatsApp(customer.phone)}
                     >
-                        <MaterialCommunityIcons name="whatsapp" size={20} color="#25d366" />
+                        <MaterialCommunityIcons name="whatsapp" size={18} color="#25d366" />
                     </TouchableOpacity>
                 </View>
             </TouchableOpacity>
@@ -195,7 +193,7 @@ export default function Customers() {
 
     if (loading) {
         return (
-            <SafeScreen backgroundColor="#f8fafc">
+            <SafeScreen backgroundColor="#0f172a" statusBarStyle="light">
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color="#3b82f6" />
                     <Text style={styles.loadingText}>טוען לקוחות...</Text>
@@ -205,7 +203,7 @@ export default function Customers() {
     }
 
     return (
-        <SafeScreen backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#0f172a" statusBarStyle="light">
             <View style={styles.container}>
                 <View style={styles.header}>
                     <TouchableOpacity
@@ -218,10 +216,11 @@ export default function Customers() {
                 </View>
 
                 <View style={styles.searchContainer}>
-                    <MaterialCommunityIcons name="magnify" size={20} color="#6b7280" />
+                    <MaterialCommunityIcons name="magnify" size={20} color="#64748b" />
                     <TextInput
                         style={styles.searchInput}
                         placeholder="חפש לקוח לפי שם, טלפון או אימייל..."
+                        placeholderTextColor="#475569"
                         value={searchText}
                         onChangeText={setSearchText}
                         textAlign="right"
@@ -279,13 +278,13 @@ export default function Customers() {
                     renderItem={renderCustomerItem}
                     keyExtractor={(item) => item.customer._id.toString()}
                     refreshControl={
-                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+                        <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#3b82f6" />
                     }
                     contentContainerStyle={styles.listContainer}
                     showsVerticalScrollIndicator={false}
                     ListEmptyComponent={
                         <View style={styles.emptyContainer}>
-                            <MaterialCommunityIcons name="account-multiple-outline" size={64} color="#d1d5db" />
+                            <MaterialCommunityIcons name="account-multiple-outline" size={64} color="#334155" />
                             <Text style={styles.emptyText}>
                                 {searchText ? 'לא נמצאו לקוחות המתאימים לחיפוש' : 'אין לקוחות רשומים'}
                             </Text>
@@ -300,70 +299,70 @@ export default function Customers() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#0f172a'
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#0f172a'
     },
     loadingText: {
         marginTop: 16,
         fontSize: 16,
-        color: '#6b7280'
+        color: '#64748b'
     },
     header: {
-        flexDirection: 'row',
+        flexDirection: 'row-reverse',
         alignItems: 'center',
         paddingHorizontal: 16,
         paddingVertical: 16,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1e293b',
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb'
+        borderBottomColor: 'rgba(59, 130, 246, 0.12)'
     },
     backButton: {
-        marginRight: 12
+        marginLeft: 12
     },
     title: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#111827',
+        color: '#f1f5f9',
         flex: 1,
         textAlign: 'right'
     },
     searchContainer: {
-        flexDirection: 'row',
+        flexDirection: 'row-reverse',
         alignItems: 'center',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1e293b',
         marginHorizontal: 16,
         marginTop: 16,
         paddingHorizontal: 16,
         paddingVertical: 12,
-        borderRadius: 12,
+        borderRadius: 14,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(255, 255, 255, 0.06)',
         gap: 12
     },
     searchInput: {
         flex: 1,
-        fontSize: 16,
-        color: '#111827'
+        fontSize: 15,
+        color: '#e2e8f0'
     },
     filterContainer: {
-        flexDirection: 'row',
+        flexDirection: 'row-reverse',
         paddingHorizontal: 16,
         marginTop: 12,
         gap: 8
     },
     filterButton: {
         flex: 1,
-        paddingVertical: 8,
+        paddingVertical: 9,
         paddingHorizontal: 16,
-        borderRadius: 8,
-        backgroundColor: '#f3f4f6',
+        borderRadius: 10,
+        backgroundColor: '#1e293b',
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(255, 255, 255, 0.06)',
         alignItems: 'center'
     },
     activeFilterButton: {
@@ -371,37 +370,37 @@ const styles = StyleSheet.create({
         borderColor: '#3b82f6'
     },
     filterButtonText: {
-        fontSize: 14,
-        fontWeight: '500',
-        color: '#6b7280'
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#64748b'
     },
     activeFilterButtonText: {
         color: '#ffffff',
-        fontWeight: '600'
+        fontWeight: '700'
     },
     statsContainer: {
-        flexDirection: 'row',
+        flexDirection: 'row-reverse',
         paddingHorizontal: 16,
         marginTop: 16,
-        gap: 12
+        gap: 10
     },
     statItem: {
         flex: 1,
-        backgroundColor: '#ffffff',
+        backgroundColor: '#1e293b',
         padding: 16,
-        borderRadius: 12,
+        borderRadius: 14,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: 'rgba(59, 130, 246, 0.12)'
     },
     statNumber: {
-        fontSize: 24,
-        fontWeight: '700',
+        fontSize: 26,
+        fontWeight: '800',
         color: '#3b82f6'
     },
     statLabel: {
-        fontSize: 14,
-        color: '#6b7280',
+        fontSize: 12,
+        color: '#94a3b8',
         marginTop: 4,
         textAlign: 'center'
     },
@@ -411,75 +410,93 @@ const styles = StyleSheet.create({
         paddingBottom: 100
     },
     customerCard: {
-        backgroundColor: '#ffffff',
-        borderRadius: 12,
+        backgroundColor: '#1e293b',
+        borderRadius: 16,
         padding: 16,
-        marginBottom: 12,
+        marginBottom: 10,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
-        flexDirection: 'row',
+        borderColor: 'rgba(255, 255, 255, 0.06)',
+        flexDirection: 'row-reverse',
         alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: {
-            width: 0,
-            height: 1,
-        },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 2,
     },
     customerInfo: {
         flex: 1
     },
     customerHeader: {
-        flexDirection: 'row',
+        flexDirection: 'row-reverse',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: 8
+        gap: 12,
+    },
+    avatarWrap: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: 'rgba(59, 130, 246, 0.15)',
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     customerName: {
-        fontSize: 18,
-        fontWeight: '600',
-        color: '#111827',
-        flex: 1,
+        fontSize: 16,
+        fontWeight: '700',
+        color: '#f1f5f9',
         textAlign: 'right'
     },
+    customerMeta: {
+        flexDirection: 'row-reverse',
+        alignItems: 'center',
+        gap: 5,
+        marginTop: 4,
+    },
+    metaText: {
+        fontSize: 12,
+        color: '#64748b',
+    },
+    metaDivider: {
+        width: 3,
+        height: 3,
+        borderRadius: 2,
+        backgroundColor: '#475569',
+        marginHorizontal: 4,
+    },
     statusBadge: {
-        backgroundColor: '#10b981',
-        paddingHorizontal: 8,
+        backgroundColor: 'rgba(16, 185, 129, 0.2)',
+        paddingHorizontal: 10,
         paddingVertical: 4,
-        borderRadius: 6,
-        marginRight: 8
+        borderRadius: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(16, 185, 129, 0.3)',
     },
     statusText: {
-        fontSize: 12,
-        color: '#ffffff',
-        fontWeight: '500'
+        fontSize: 11,
+        color: '#10b981',
+        fontWeight: '600'
     },
     customerDetails: {
         gap: 4
     },
     detailRow: {
-        flexDirection: 'row',
+        flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 8
     },
     detailText: {
-        fontSize: 14,
-        color: '#6b7280',
+        fontSize: 13,
+        color: '#94a3b8',
         flex: 1,
         textAlign: 'right'
     },
     actionButtons: {
-        flexDirection: 'row',
+        flexDirection: 'column',
         gap: 8,
-        marginLeft: 8
+        marginRight: 8
     },
     actionButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
-        backgroundColor: '#f3f4f6',
+        width: 38,
+        height: 38,
+        borderRadius: 12,
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+        borderWidth: 1,
+        borderColor: 'rgba(59, 130, 246, 0.2)',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -488,8 +505,8 @@ const styles = StyleSheet.create({
         paddingVertical: 64
     },
     emptyText: {
-        fontSize: 16,
-        color: '#6b7280',
+        fontSize: 15,
+        color: '#64748b',
         marginTop: 16,
         textAlign: 'center'
     }

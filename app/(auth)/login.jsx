@@ -45,7 +45,28 @@ export default function PhoneLogin() {
                 return;
             }
 
-            // Navigate to OTP verification screen
+            // If phone is not registered in the system, alert and prompt to register
+            if (data.userExists === false) {
+                Alert.alert(
+                    'מספר אינו רשום',
+                    'מספר הטלפון שהזנת אינו רשום במערכת. האם ברצונך להירשם?',
+                    [
+                        { text: 'ביטול', style: 'cancel' },
+                        {
+                            text: 'מעבר להרשמה',
+                            onPress: () => {
+                                router.push({
+                                    pathname: '/(auth)/signup',
+                                    params: { phone: cleanPhone }
+                                });
+                            }
+                        }
+                    ]
+                );
+                return;
+            }
+
+            // Navigate to OTP verification screen for existing user
             router.push({
                 pathname: '/(auth)/otpVerify',
                 params: {
@@ -54,7 +75,7 @@ export default function PhoneLogin() {
                 }
             });
         } catch (e) {
-            Alert.alert('שגיאה', e instanceof Error ? e.message : 'אירעה שגיאה בחיבור לשרת');
+            Alert.alert('שגיאה', e?.message || 'אירעה שגיאה בחיבור לשרת');
         } finally {
             setLoading(false);
         }

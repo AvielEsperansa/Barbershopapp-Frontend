@@ -6,7 +6,7 @@ import SafeScreen from '../components/SafeScreen'
 
 export default function _layout() {
     return (
-        <SafeScreen backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#f8fafc" >
             <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
             <Tabs
                 screenOptions={{

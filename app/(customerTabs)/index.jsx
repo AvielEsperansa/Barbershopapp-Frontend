@@ -2,12 +2,12 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs'
 import * as Haptics from 'expo-haptics'
 import { router, useFocusEffect } from 'expo-router'
-import React, { useCallback, useState } from 'react'
+import { useCallback, useState } from 'react'
 import {
-    ActivityIndicator,
     Image,
     Linking,
     Pressable,
+    RefreshControl,
     ScrollView,
     StyleSheet,
     Text,
@@ -15,59 +15,68 @@ import {
 } from 'react-native'
 import config from '../../config'
 import apiClient from '../../lib/apiClient'
-import SafeScreen from '../components/SafeScreen'
 
 export default function CustomerDashboard() {
     const tabBarHeight = useBottomTabBarHeight()
     const [user, setUser] = useState(null)
     const [upcomingAppointment, setUpcomingAppointment] = useState(null)
     const [loading, setLoading] = useState(false)
+    const [refreshing, setRefreshing] = useState(false)
 
-    // Barbershop Announcements / Messages
-    const announcements = [
+    const DEFAULT_ANNOUNCEMENTS = [
         {
-            id: '1',
-            type: 'promotion',
+            _id: '1',
             icon: 'sale',
             title: '🔥 מבצע אמצע שבוע מסעיר!',
             content: '10% הנחה על כל עיצוב זקן בימי שלישי ורביעי. הקדימו להזמין תור!',
-            time: 'לפני שעתיים',
-            isNew: true,
+            timeText: 'לפני שעתיים',
+            isNewItem: true,
             color: '#d97706',
             bgColor: '#fef3c7',
         },
         {
-            id: '2',
-            type: 'update',
+            _id: '2',
             icon: 'clock-check-outline',
             title: '⏰ שעות פעילות לסוף השבוע',
             content: 'ביום חמישי המספרה פתוחה עד 21:00. מומלץ לשריין תור מראש.',
-            time: 'אתמול',
-            isNew: false,
+            timeText: 'אתמול',
+            isNewItem: false,
             color: '#2563eb',
             bgColor: '#dbeafe',
         },
-        {
-            id: '3',
-            type: 'tip',
-            icon: 'scissors-cutting',
-            title: '✂️ טיפ מהספר לטיפוח השיער',
-            content: 'השתמשו בשמן זקן טבעי מדי בוקר לשמירה על ברק ורכות לאורך זמן.',
-            time: 'לפני יומיים',
-            isNew: false,
-            color: '#059669',
-            bgColor: '#d1fae5',
-        },
     ]
 
-    const gallery = [
-        { id: '1', src: require('../../assets/gallery/cut1.jpeg'), title: 'פייד קלאסי' },
-        { id: '2', src: require('../../assets/gallery/cut2.jpeg'), title: 'עיצוב זקן' },
-        { id: '3', src: require('../../assets/gallery/cut3.jpeg'), title: 'טקסטורה מודרנית' },
+    const DEFAULT_GALLERY = [
+        { _id: '1', src: require('../../assets/gallery/cut1.jpeg'), title: 'פייד קלאסי' },
+        { _id: '2', src: require('../../assets/gallery/cut2.jpeg'), title: 'עיצוב זקן' },
+        { _id: '3', src: require('../../assets/gallery/cut3.jpeg'), title: 'טקסטורה מודרנית' },
     ]
 
-    const fetchHomeData = useCallback(async () => {
-        setLoading(true)
+    const [announcements, setAnnouncements] = useState(DEFAULT_ANNOUNCEMENTS)
+    const [gallery, setGallery] = useState(DEFAULT_GALLERY)
+
+    const formatTimeAgo = (dateString) => {
+        if (!dateString) return ''
+        try {
+            const date = new Date(dateString)
+            const now = new Date()
+            const diffMs = now.getTime() - date.getTime()
+            const diffMins = Math.floor(diffMs / 60000)
+            const diffHours = Math.floor(diffMins / 60)
+            const diffDays = Math.floor(diffHours / 24)
+
+            if (diffMins < 60) return diffMins <= 1 ? 'ממש עכשיו' : `לפני ${diffMins} דקות`
+            if (diffHours < 24) return `לפני ${diffHours} שעות`
+            if (diffDays === 1) return 'אתמול'
+            if (diffDays < 7) return `לפני ${diffDays} ימים`
+            return date.toLocaleDateString('he-IL')
+        } catch {
+            return ''
+        }
+    }
+
+    const fetchHomeData = useCallback(async (showLoading = false) => {
+        if (showLoading) setLoading(true)
         try {
             // Fetch User Profile
             const profileRes = await apiClient.get(`${config.BASE_URL}/users/profile`)
@@ -85,16 +94,51 @@ export default function CustomerDashboard() {
                 const future = list.find(a => a.status !== 'cancelled' && new Date(a.date) >= now)
                 setUpcomingAppointment(future || null)
             }
+
+            // Fetch Live Announcements
+            try {
+                const annRes = await apiClient.get(`${config.BASE_URL}/content/announcements`)
+                if (annRes.ok) {
+                    const annData = await annRes.json()
+                    if (annData.announcements && annData.announcements.length > 0) {
+                        setAnnouncements(annData.announcements)
+                    }
+                }
+            } catch { }
+
+            // Fetch Live Gallery
+            try {
+                const galRes = await apiClient.get(`${config.BASE_URL}/content/gallery`)
+                if (galRes.ok) {
+                    const galData = await galRes.json()
+                    if (galData.items && galData.items.length > 0) {
+                        setGallery(galData.items)
+                    }
+                }
+            } catch { }
         } catch (e) {
             console.log('Error fetching home data:', e)
         } finally {
-            setLoading(false)
+            if (showLoading) setLoading(false)
         }
     }, [])
 
+    const onRefresh = useCallback(async () => {
+        setRefreshing(true)
+        await fetchHomeData(false)
+        setRefreshing(false)
+    }, [fetchHomeData])
+
+    // עדכון מיידי בכניסה לטאב + סנכרון שקט כל 20 שניות כל עוד העמוד פתוח
     useFocusEffect(
         useCallback(() => {
-            fetchHomeData()
+            fetchHomeData(false)
+
+            const interval = setInterval(() => {
+                fetchHomeData(false)
+            }, 20000)
+
+            return () => clearInterval(interval)
         }, [fetchHomeData])
     )
 
@@ -127,205 +171,219 @@ export default function CustomerDashboard() {
     }
 
     return (
-        <SafeScreen backgroundColor="#f8fafc" statusBarStyle="dark">
-            <ScrollView contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 24 }]}>
-                {/* Header Welcome Bar */}
-                <View style={styles.welcomeRow}>
-                    <View style={styles.welcomeTextGroup}>
-                        <Text style={styles.greetingText}>{getGreeting()}</Text>
-                        <Text style={styles.userNameText}>
-                            {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'אורח יקר'}
-                        </Text>
+        <ScrollView
+            style={{ backgroundColor: "#f8fafc" }}
+            contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 24 }]}
+            refreshControl={
+                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
+            }
+            showsVerticalScrollIndicator={false}
+        >
+            {/* Header Welcome Bar */}
+            <View style={styles.welcomeRow}>
+                <View style={styles.welcomeTextGroup}>
+                    <Text style={styles.greetingText}>{getGreeting()}</Text>
+                    <Text style={styles.userNameText}>
+                        {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'אורח יקר'}
+                    </Text>
+                </View>
+                <Pressable
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                        router.push('/(customerTabs)/customerProfile')
+                    }}
+                    style={styles.avatarButton}
+                >
+                    {user?.profileImageData?.url ? (
+                        <Image source={{ uri: user.profileImageData.url }} style={styles.avatarImg} />
+                    ) : (
+                        <View style={styles.avatarPlaceholder}>
+                            <MaterialCommunityIcons name="account" size={26} color="#2563eb" />
+                        </View>
+                    )}
+                </Pressable>
+            </View>
+
+            {/* Hero Banner Card */}
+            <View style={styles.heroCard}>
+                <View style={styles.heroContent}>
+                    <View style={styles.heroBadge}>
+                        <MaterialCommunityIcons name="scissors-cutting" size={14} color="#d97706" />
+                        <Text style={styles.heroBadgeText}>Oshri Barber Shop</Text>
                     </View>
+                    <Text style={styles.heroTitle}>תספורת מושלמת.{'\n'}סטייל שמתאים לך.</Text>
+                    <Text style={styles.heroSubtitle}>מיומנות, דיוק ויחס אישי בכל תספורת.</Text>
+
                     <Pressable
                         onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                            router.push('/(customerTabs)/customerProfile')
+                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
+                            router.push('/(customerTabs)/customerAppointment')
                         }}
-                        style={styles.avatarButton}
+                        style={({ pressed }) => [
+                            styles.heroCtaBtn,
+                            pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }
+                        ]}
                     >
-                        {user?.profileImageData?.url ? (
-                            <Image source={{ uri: user.profileImageData.url }} style={styles.avatarImg} />
-                        ) : (
-                            <View style={styles.avatarPlaceholder}>
-                                <MaterialCommunityIcons name="account" size={26} color="#2563eb" />
-                            </View>
-                        )}
+                        <Text style={styles.heroCtaText}>זמן תור עכשיו</Text>
+                        <MaterialCommunityIcons name="arrow-left" size={18} color="#0f172a" />
                     </Pressable>
                 </View>
+            </View>
 
-                {/* Hero Banner Card */}
-                <View style={styles.heroCard}>
-                    <View style={styles.heroContent}>
-                        <View style={styles.heroBadge}>
-                            <MaterialCommunityIcons name="scissors-cutting" size={14} color="#d97706" />
-                            <Text style={styles.heroBadgeText}>Oshri Barber Shop</Text>
+            {/* Quick Action Buttons */}
+            <View style={styles.quickActionsRow}>
+                <Pressable
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                        router.push('/(customerTabs)/customerAppointment')
+                    }}
+                    style={styles.actionTile}
+                >
+                    <View style={[styles.actionIconCircle, { backgroundColor: '#dbeafe' }]}>
+                        <MaterialCommunityIcons name="calendar-plus" size={22} color="#2563eb" />
+                    </View>
+                    <Text style={styles.actionTileTitle}>קביעת תור</Text>
+                </Pressable>
+
+                <Pressable
+                    onPress={() => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                        router.push('/myAppointments')
+                    }}
+                    style={styles.actionTile}
+                >
+                    <View style={[styles.actionIconCircle, { backgroundColor: '#fef3c7' }]}>
+                        <MaterialCommunityIcons name="calendar-clock" size={22} color="#d97706" />
+                    </View>
+                    <Text style={styles.actionTileTitle}>התורים שלי</Text>
+                </Pressable>
+
+                <Pressable
+                    onPress={openWhatsApp}
+                    style={styles.actionTile}
+                >
+                    <View style={[styles.actionIconCircle, { backgroundColor: '#d1fae5' }]}>
+                        <MaterialCommunityIcons name="whatsapp" size={22} color="#059669" />
+                    </View>
+                    <Text style={styles.actionTileTitle}>צור קשר</Text>
+                </Pressable>
+            </View>
+
+            {/* Upcoming Appointment Card (If exists) */}
+            {upcomingAppointment && (
+                <View style={styles.upcomingCard}>
+                    <View style={styles.upcomingHeader}>
+                        <View style={styles.upcomingBadge}>
+                            <MaterialCommunityIcons name="clock-outline" size={14} color="#2563eb" />
+                            <Text style={styles.upcomingBadgeText}>תור קרוב</Text>
                         </View>
-                        <Text style={styles.heroTitle}>תספורת מושלמת.{'\n'}סטייל שמתאים לך.</Text>
-                        <Text style={styles.heroSubtitle}>מיומנות, דיוק ויחס אישי בכל תספורת.</Text>
-
+                        <Text style={styles.upcomingDate}>
+                            {new Date(upcomingAppointment.date).toLocaleDateString('he-IL')} • {upcomingAppointment.startTime}
+                        </Text>
+                    </View>
+                    <View style={styles.upcomingBody}>
+                        <MaterialCommunityIcons name="content-cut" size={24} color="#0f172a" />
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.upcomingService}>
+                                {upcomingAppointment.service?.name || 'תספורת'}
+                            </Text>
+                            <Text style={styles.upcomingBarber}>
+                                ספר: {upcomingAppointment.barber?.firstName ? `${upcomingAppointment.barber.firstName} ${upcomingAppointment.barber.lastName || ''}`.trim() : 'אושרי'}
+                            </Text>
+                        </View>
                         <Pressable
                             onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)
-                                router.push('/(customerTabs)/customerAppointment')
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                router.push('/myAppointments')
                             }}
-                            style={({ pressed }) => [
-                                styles.heroCtaBtn,
-                                pressed && { opacity: 0.9, transform: [{ scale: 0.98 }] }
-                            ]}
+                            style={styles.viewApptBtn}
                         >
-                            <Text style={styles.heroCtaText}>זמן תור עכשיו</Text>
-                            <MaterialCommunityIcons name="arrow-left" size={18} color="#0f172a" />
+                            <Text style={styles.viewApptBtnText}>פרטים</Text>
                         </Pressable>
                     </View>
                 </View>
+            )}
 
-                {/* Quick Action Buttons */}
-                <View style={styles.quickActionsRow}>
-                    <Pressable
-                        onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                            router.push('/(customerTabs)/customerAppointment')
-                        }}
-                        style={styles.actionTile}
-                    >
-                        <View style={[styles.actionIconCircle, { backgroundColor: '#dbeafe' }]}>
-                            <MaterialCommunityIcons name="calendar-plus" size={22} color="#2563eb" />
+            {/* NEW: 📢 חלון הודעות ועדכונים מהמספרה */}
+            <View style={styles.sectionCard}>
+                <View style={styles.sectionHeaderRow}>
+                    <View style={styles.sectionTitleWithBadge}>
+                        <Text style={styles.sectionTitleText}>📢 הודעות ועדכונים</Text>
+                        <View style={styles.newBadgeDot}>
+                            <Text style={styles.newBadgeDotText}>חדש</Text>
                         </View>
-                        <Text style={styles.actionTileTitle}>קביעת תור</Text>
-                    </Pressable>
-
-                    <Pressable
-                        onPress={() => {
-                            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                            router.push('/myAppointments')
-                        }}
-                        style={styles.actionTile}
-                    >
-                        <View style={[styles.actionIconCircle, { backgroundColor: '#fef3c7' }]}>
-                            <MaterialCommunityIcons name="calendar-clock" size={22} color="#d97706" />
-                        </View>
-                        <Text style={styles.actionTileTitle}>התורים שלי</Text>
-                    </Pressable>
-
-                    <Pressable
-                        onPress={openWhatsApp}
-                        style={styles.actionTile}
-                    >
-                        <View style={[styles.actionIconCircle, { backgroundColor: '#d1fae5' }]}>
-                            <MaterialCommunityIcons name="whatsapp" size={22} color="#059669" />
-                        </View>
-                        <Text style={styles.actionTileTitle}>צור קשר</Text>
-                    </Pressable>
+                    </View>
+                    <Text style={styles.sectionSubtitleText}>עדכונים חמים מהמספרה</Text>
                 </View>
 
-                {/* Upcoming Appointment Card (If exists) */}
-                {upcomingAppointment && (
-                    <View style={styles.upcomingCard}>
-                        <View style={styles.upcomingHeader}>
-                            <View style={styles.upcomingBadge}>
-                                <MaterialCommunityIcons name="clock-outline" size={14} color="#2563eb" />
-                                <Text style={styles.upcomingBadgeText}>תור קרוב</Text>
+                <View style={styles.announcementsList}>
+                    {announcements.map((item) => (
+                        <View key={item._id || item.id} style={styles.announcementItem}>
+                            <View style={[styles.announcementIconWrap, { backgroundColor: item.bgColor || '#fef3c7' }]}>
+                                <MaterialCommunityIcons name={item.icon || 'bullhorn'} size={22} color={item.color || '#d97706'} />
                             </View>
-                            <Text style={styles.upcomingDate}>
-                                {new Date(upcomingAppointment.date).toLocaleDateString('he-IL')} • {upcomingAppointment.startTime}
-                            </Text>
-                        </View>
-                        <View style={styles.upcomingBody}>
-                            <MaterialCommunityIcons name="content-cut" size={24} color="#0f172a" />
-                            <View style={{ flex: 1 }}>
-                                <Text style={styles.upcomingService}>
-                                    {upcomingAppointment.service?.name || 'תספורת'}
-                                </Text>
-                                <Text style={styles.upcomingBarber}>
-                                    ספר: {upcomingAppointment.barber?.firstName ? `${upcomingAppointment.barber.firstName} ${upcomingAppointment.barber.lastName || ''}`.trim() : 'אושרי'}
+                            <View style={styles.announcementContent}>
+                                <View style={styles.announcementTopRow}>
+                                    <Text style={styles.announcementTitle}>{item.title}</Text>
+                                    {(item.isNewItem || item.isNew) && <View style={styles.pulseDot} />}
+                                </View>
+                                <Text style={styles.announcementText}>{item.content}</Text>
+                                <Text style={styles.announcementTime}>
+                                    {item.timeText || formatTimeAgo(item.createdAt) || 'עכשיו'}
                                 </Text>
                             </View>
-                            <Pressable
-                                onPress={() => {
-                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                                    router.push('/myAppointments')
-                                }}
-                                style={styles.viewApptBtn}
-                            >
-                                <Text style={styles.viewApptBtnText}>פרטים</Text>
-                            </Pressable>
                         </View>
-                    </View>
-                )}
+                    ))}
+                </View>
+            </View>
 
-                {/* NEW: 📢 חלון הודעות ועדכונים מהמספרה */}
-                <View style={styles.sectionCard}>
-                    <View style={styles.sectionHeaderRow}>
-                        <View style={styles.sectionTitleWithBadge}>
-                            <Text style={styles.sectionTitleText}>📢 הודעות ועדכונים</Text>
-                            <View style={styles.newBadgeDot}>
-                                <Text style={styles.newBadgeDotText}>חדש</Text>
-                            </View>
-                        </View>
-                        <Text style={styles.sectionSubtitleText}>עדכונים חמים מהמספרה</Text>
-                    </View>
-
-                    <View style={styles.announcementsList}>
-                        {announcements.map((item) => (
-                            <View key={item.id} style={styles.announcementItem}>
-                                <View style={[styles.announcementIconWrap, { backgroundColor: item.bgColor }]}>
-                                    <MaterialCommunityIcons name={item.icon} size={22} color={item.color} />
-                                </View>
-                                <View style={styles.announcementContent}>
-                                    <View style={styles.announcementTopRow}>
-                                        <Text style={styles.announcementTitle}>{item.title}</Text>
-                                        {item.isNew && <View style={styles.pulseDot} />}
-                                    </View>
-                                    <Text style={styles.announcementText}>{item.content}</Text>
-                                    <Text style={styles.announcementTime}>{item.time}</Text>
-                                </View>
-                            </View>
-                        ))}
-                    </View>
+            {/* Haircut Gallery Section */}
+            <View style={styles.sectionCard}>
+                <View style={styles.sectionHeaderRow}>
+                    <Text style={styles.sectionTitleText}>✂️ גלריית עבודות וסטייל</Text>
+                    <Text style={styles.sectionSubtitleText}>מבחר תספורות אחרונות מהמספרה</Text>
                 </View>
 
-                {/* Haircut Gallery Section */}
-                <View style={styles.sectionCard}>
-                    <View style={styles.sectionHeaderRow}>
-                        <Text style={styles.sectionTitleText}>✂️ גלריית עבודות וסטייל</Text>
-                        <Text style={styles.sectionSubtitleText}>מבחר תספורות אחרונות מהמספרה</Text>
-                    </View>
-
-                    <View style={styles.galleryGrid}>
-                        {gallery.map((item) => (
-                            <View key={item.id} style={styles.galleryCard}>
-                                <Image source={item.src} style={styles.galleryImg} />
+                <View style={styles.galleryGrid}>
+                    {gallery.map((item) => (
+                        <View key={item._id || item.id} style={styles.galleryCard}>
+                            <Image
+                                source={item.imageUrl ? { uri: item.imageUrl } : item.src}
+                                style={styles.galleryImg}
+                                resizeMode="cover"
+                            />
+                            {!!item.title && (
                                 <View style={styles.galleryOverlay}>
                                     <Text style={styles.galleryTag}>{item.title}</Text>
                                 </View>
-                            </View>
-                        ))}
-                    </View>
+                            )}
+                        </View>
+                    ))}
                 </View>
+            </View>
 
-                {/* Connect / Social Bar */}
-                <View style={styles.socialBarCard}>
-                    <Text style={styles.socialTitle}>עקבו אחרינו והישארו מעודכנים 📱</Text>
-                    <View style={styles.socialButtonsRow}>
-                        <Pressable onPress={openInstagram} style={[styles.socialPill, styles.instaPill]}>
-                            <MaterialCommunityIcons name="instagram" size={18} color="#fff" />
-                            <Text style={styles.socialPillText}>Instagram</Text>
-                        </Pressable>
+            {/* Connect / Social Bar */}
+            <View style={styles.socialBarCard}>
+                <Text style={styles.socialTitle}>עקבו אחרינו והישארו מעודכנים 📱</Text>
+                <View style={styles.socialButtonsRow}>
+                    <Pressable onPress={openInstagram} style={[styles.socialPill, styles.instaPill]}>
+                        <MaterialCommunityIcons name="instagram" size={18} color="#fff" />
+                        <Text style={styles.socialPillText}>Instagram</Text>
+                    </Pressable>
 
-                        <Pressable onPress={openWhatsApp} style={[styles.socialPill, styles.waPill]}>
-                            <MaterialCommunityIcons name="whatsapp" size={18} color="#fff" />
-                            <Text style={styles.socialPillText}>WhatsApp</Text>
-                        </Pressable>
+                    <Pressable onPress={openWhatsApp} style={[styles.socialPill, styles.waPill]}>
+                        <MaterialCommunityIcons name="whatsapp" size={18} color="#fff" />
+                        <Text style={styles.socialPillText}>WhatsApp</Text>
+                    </Pressable>
 
-                        <Pressable onPress={openWaze} style={[styles.socialPill, styles.wazePill]}>
-                            <MaterialCommunityIcons name="waze" size={18} color="#fff" />
-                            <Text style={styles.socialPillText}>Waze</Text>
-                        </Pressable>
-                    </View>
+                    <Pressable onPress={openWaze} style={[styles.socialPill, styles.wazePill]}>
+                        <MaterialCommunityIcons name="waze" size={18} color="#fff" />
+                        <Text style={styles.socialPillText}>Waze</Text>
+                    </Pressable>
                 </View>
-            </ScrollView>
-        </SafeScreen>
+            </View>
+        </ScrollView>
+        // </SafeScreen>
     )
 }
 
