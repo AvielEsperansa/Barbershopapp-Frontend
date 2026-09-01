@@ -1,4 +1,4 @@
 const config = {
-    BASE_URL: 'http://10.0.0.12:4000'
+    BASE_URL: 'https://barbershopapp-backend.onrender.com'
 }
 export default config;
