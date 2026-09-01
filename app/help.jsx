@@ -78,13 +78,13 @@ export default function Help() {
     }
 
     return (
-        <SafeScreen backgroundColor="#f8fafc">
-            <StatusBar barStyle="dark-content" backgroundColor="#f8fafc" />
+        <SafeScreen backgroundColor="#09090b">
+            <StatusBar barStyle="light-content" backgroundColor="#09090b" />
 
             {/* Header */}
             <View style={styles.header}>
                 <Pressable onPress={() => router.back()} style={styles.backButton}>
-                    <MaterialCommunityIcons name="arrow-right" size={24} color="#111827" />
+                    <MaterialCommunityIcons name="arrow-right" size={24} color="#ef4444" />
                     <Text style={styles.backText}>חזרה</Text>
                 </Pressable>
                 <Text style={styles.title}>עזרה ותמיכה</Text>
@@ -95,65 +95,72 @@ export default function Help() {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
             >
-                <ScrollView contentContainerStyle={styles.content}>
+                <ScrollView style={{ backgroundColor: "#09090b" }} contentContainerStyle={styles.content}>
+                    {/* Glowing Red Background Orbs */}
+                    <View style={styles.orbTopRight} />
+                    <View style={styles.orbBottomLeft} />
+
                     {/* Info Section */}
                     <View style={styles.infoSection}>
-                        <MaterialCommunityIcons name="help-circle" size={48} color="#3b82f6" />
-                        <Text style={styles.infoTitle}>איך נוכל לעזור?</Text>
+                        <MaterialCommunityIcons name="help-circle-outline" size={48} color="#ef4444" />
+                        <Text style={styles.infoTitle}>איך אפשר לעזור לך?</Text>
                         <Text style={styles.infoText}>
-                            כתוב לנו מה אתה צריך עזרה בו ואנחנו נחזור אליך בהקדם האפשרי
+                            יש לך שאלה? צרור בקשה או בעיה?{'\n'}
+                            כתוב לנו ונציג שלנו יחזור אליך בהקדם!
                         </Text>
                     </View>
 
-                    {/* Message Form */}
+                    {/* Form Section */}
                     <View style={styles.formSection}>
-                        <Text style={styles.formLabel}>תיאור הבעיה או הבקשה:</Text>
+                        <Text style={styles.formLabel}>הודעה שלך</Text>
                         <TextInput
                             style={styles.messageInput}
-                            placeholder="כתוב כאן מה אתה צריך עזרה בו..."
-                            placeholderTextColor="#9ca3af"
+                            placeholder="כתוב כאן את הודעתך..."
+                            placeholderTextColor="#71717a"
                             value={message}
                             onChangeText={setMessage}
                             multiline
-                            numberOfLines={6}
+                            numberOfLines={5}
                             textAlignVertical="top"
                             textAlign="right"
                         />
-
                         <Text style={styles.helperText}>
-                            ההודעה תישלח ישירות לווצאפ של בעל העסק
+                            ההודעה תיפתח באפליקציית ווצאפ ליצירת קשר ישיר עם בעל המספרה
                         </Text>
                     </View>
 
                     {/* Send Button */}
                     <Pressable
-                        style={[styles.sendButton, loading && styles.sendButtonDisabled]}
                         onPress={handleSendMessage}
-                        disabled={loading}
+                        disabled={loading || !message.trim()}
+                        style={[
+                            styles.sendButton,
+                            (!message.trim() || loading) && styles.sendButtonDisabled
+                        ]}
                     >
-                        <MaterialCommunityIcons name="whatsapp" size={20} color="#ffffff" />
+                        <MaterialCommunityIcons name="whatsapp" size={24} color="#ffffff" />
                         <Text style={styles.sendButtonText}>
-                            {loading ? 'שולח...' : 'שלח לווצאפ'}
+                            {loading ? 'פותח ווצאפ...' : 'שלח הודעה בווצאפ'}
                         </Text>
                     </Pressable>
 
                     {/* Contact Info */}
                     <View style={styles.contactSection}>
-                        <Text style={styles.contactTitle}>דרכי יצירת קשר נוספים:</Text>
+                        <Text style={styles.contactTitle}>פרטי התקשרות נוספים</Text>
 
                         <View style={styles.contactItem}>
-                            <MaterialCommunityIcons name="phone" size={20} color="#6b7280" />
-                            <Text style={styles.contactText}>טלפון: 052-652-5185</Text>
+                            <MaterialCommunityIcons name="phone" size={20} color="#ef4444" />
+                            <Text style={styles.contactText}>052-6525185</Text>
                         </View>
 
                         <View style={styles.contactItem}>
-                            <MaterialCommunityIcons name="email" size={20} color="#6b7280" />
-                            <Text style={styles.contactText}>אימייל: info@oshribarber.com</Text>
+                            <MaterialCommunityIcons name="clock-outline" size={20} color="#ef4444" />
+                            <Text style={styles.contactText}>ראשון - חמישי: 09:00 - 20:00</Text>
                         </View>
 
                         <View style={styles.contactItem}>
-                            <MaterialCommunityIcons name="map-marker" size={20} color="#6b7280" />
-                            <Text style={styles.contactText}>כתובת: יוסי בנאי 10, רמלה</Text>
+                            <MaterialCommunityIcons name="map-marker" size={20} color="#ef4444" />
+                            <Text style={styles.contactText}>מספרת אושרי, ישראל</Text>
                         </View>
                     </View>
                 </ScrollView>
@@ -163,18 +170,14 @@ export default function Help() {
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f8fafc',
-    },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
-        paddingBottom: 16,
-        backgroundColor: '#ffffff',
+        paddingVertical: 12,
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb',
+        borderBottomColor: 'rgba(239, 68, 68, 0.25)',
+        backgroundColor: 'rgba(24, 24, 27, 0.95)',
     },
     backButton: {
         flexDirection: 'row',
@@ -183,72 +186,96 @@ const styles = StyleSheet.create({
     },
     backText: {
         fontSize: 16,
-        color: '#111827',
+        color: '#ef4444',
         marginRight: 4,
+        fontWeight: 'bold',
     },
     title: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#111827',
+        color: '#ffffff',
         flex: 1,
         textAlign: 'center',
-        marginRight: 40, // כדי לאזן עם כפתור החזרה
+        marginRight: 40,
     },
     content: {
         padding: 16,
         gap: 24,
+        backgroundColor: '#09090b',
+    },
+    orbTopRight: {
+        position: 'absolute',
+        top: -60,
+        right: -60,
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    },
+    orbBottomLeft: {
+        position: 'absolute',
+        bottom: -60,
+        left: -60,
+        width: 260,
+        height: 260,
+        borderRadius: 130,
+        backgroundColor: 'rgba(220, 38, 38, 0.08)',
     },
     infoSection: {
         alignItems: 'center',
         paddingVertical: 24,
-        backgroundColor: '#ffffff',
-        borderRadius: 12,
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
+        borderRadius: 16,
         paddingHorizontal: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.25)',
     },
     infoTitle: {
         fontSize: 20,
         fontWeight: '600',
-        color: '#111827',
+        color: '#ffffff',
         marginTop: 16,
         marginBottom: 8,
     },
     infoText: {
         fontSize: 16,
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'center',
         lineHeight: 24,
     },
     formSection: {
-        backgroundColor: '#ffffff',
-        borderRadius: 12,
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
+        borderRadius: 16,
         padding: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.25)',
     },
     formLabel: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#111827',
+        color: '#ffffff',
         marginBottom: 12,
         textAlign: 'right',
     },
     messageInput: {
         borderWidth: 1,
-        borderColor: '#d1d5db',
-        borderRadius: 8,
+        borderColor: 'rgba(239, 68, 68, 0.25)',
+        borderRadius: 10,
         padding: 16,
         fontSize: 16,
-        color: '#111827',
-        backgroundColor: '#f9fafb',
+        color: '#ffffff',
+        backgroundColor: '#27272a',
         minHeight: 120,
     },
     helperText: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#a1a1aa',
         marginTop: 8,
         textAlign: 'center',
         fontStyle: 'italic',
     },
     sendButton: {
-        backgroundColor: '#25d366', // צבע ווצאפ
+        backgroundColor: '#25d366',
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
@@ -265,7 +292,7 @@ const styles = StyleSheet.create({
         elevation: 6,
     },
     sendButtonDisabled: {
-        backgroundColor: '#9ca3af',
+        backgroundColor: '#3f3f46',
         shadowOpacity: 0.1,
     },
     sendButtonText: {
@@ -274,9 +301,11 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     contactSection: {
-        backgroundColor: '#ffffff',
-        borderRadius: 12,
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
+        borderRadius: 16,
         padding: 20,
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.25)',
     },
     contactTitle: {
         fontSize: 18,

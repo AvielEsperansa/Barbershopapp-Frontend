@@ -104,19 +104,19 @@ export default function CustomerProfile() {
             style={({ pressed }) => [
                 styles.row,
                 danger && styles.rowDanger,
-                pressed && { backgroundColor: danger ? '#fee2e2' : '#f1f5f9' }
+                pressed && { backgroundColor: danger ? 'rgba(220, 38, 38, 0.2)' : 'rgba(239, 68, 68, 0.1)' }
             ]}
         >
             <View style={styles.rowLeft}>
                 <View style={[styles.rowIconCircle, danger && styles.rowIconCircleDanger]}>
-                    <MaterialCommunityIcons name={icon} size={20} color={danger ? '#dc2626' : '#2563eb'} />
+                    <MaterialCommunityIcons name={icon} size={20} color={danger ? '#ef4444' : '#ef4444'} />
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                     <Text style={[styles.rowTitle, danger && styles.rowTitleDanger]}>{title}</Text>
                     {!!subtitle && <Text style={styles.rowSubtitle}>{subtitle}</Text>}
                 </View>
             </View>
-            <MaterialCommunityIcons name="chevron-left" size={20} color={danger ? '#dc2626' : '#94a3b8'} />
+            <MaterialCommunityIcons name="chevron-left" size={20} color={danger ? '#ef4444' : '#71717a'} />
         </Pressable>
     )
 
@@ -126,9 +126,9 @@ export default function CustomerProfile() {
                 message="טוען פרופיל משתמש..."
                 subMessage="שולף את הנתונים וההטבות שלך..."
                 icon="account-circle"
-                backgroundColor="#f8fafc"
-                statusBarStyle="dark"
-                accentColor="#2563eb"
+                backgroundColor="#09090b"
+                statusBarStyle="light"
+                accentColor="#ef4444"
             />
         )
     }
@@ -143,8 +143,11 @@ export default function CustomerProfile() {
     }
 
     return (
-        // <SafeScreen backgroundColor="#f8fafc" statusBarStyle="dark">
-        <ScrollView style={{ backgroundColor: "#f8fafc" }} contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 20 }]}>
+        <ScrollView style={{ backgroundColor: "#09090b" }} contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 20 }]}>
+            {/* Glowing Red Background Orbs */}
+            <View style={styles.orbTopRight} />
+            <View style={styles.orbBottomLeft} />
+
             {/* Profile Card Header */}
             <View style={styles.headerCard}>
                 <ImageUploader
@@ -160,18 +163,18 @@ export default function CustomerProfile() {
                 <View style={styles.badgeRow}>
                     {completedCount >= 5 ? (
                         <View style={styles.vipBadge}>
-                            <MaterialCommunityIcons name="crown" size={14} color="#d97706" />
+                            <MaterialCommunityIcons name="crown" size={14} color="#f59e0b" />
                             <Text style={styles.vipBadgeText}>לקוח VIP ({completedCount} תספורות)</Text>
                         </View>
                     ) : (
                         <View style={styles.regularBadge}>
-                            <MaterialCommunityIcons name="account-check" size={14} color="#2563eb" />
+                            <MaterialCommunityIcons name="account-check" size={14} color="#ef4444" />
                             <Text style={styles.regularBadgeText}>עוד {5 - completedCount} תספורות ל-VIP</Text>
                         </View>
                     )}
                     {!!user.phone && (
                         <View style={styles.phoneBadge}>
-                            <MaterialCommunityIcons name="phone" size={13} color="#475569" />
+                            <MaterialCommunityIcons name="phone" size={13} color="#a1a1aa" />
                             <Text style={styles.phoneBadgeText}>{user.phone}</Text>
                         </View>
                     )}
@@ -222,7 +225,6 @@ export default function CustomerProfile() {
                     onPress={onLogout} />
             </View>
         </ScrollView>
-        // </SafeScreen>
     )
 }
 
@@ -231,27 +233,45 @@ const styles = StyleSheet.create({
         gap: 16,
         paddingHorizontal: 16,
         paddingTop: 10,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#09090b',
+    },
+    orbTopRight: {
+        position: 'absolute',
+        top: -60,
+        right: -60,
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    },
+    orbBottomLeft: {
+        position: 'absolute',
+        bottom: -60,
+        left: -60,
+        width: 260,
+        height: 260,
+        borderRadius: 130,
+        backgroundColor: 'rgba(220, 38, 38, 0.08)',
     },
     headerCard: {
         alignItems: 'center',
         gap: 10,
         paddingVertical: 24,
         paddingHorizontal: 20,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.9)',
         borderRadius: 24,
         borderWidth: 1,
-        borderColor: '#e2e8f0',
-        shadowColor: '#0f172a',
+        borderColor: 'rgba(239, 68, 68, 0.3)',
+        shadowColor: '#ef4444',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
+        shadowOpacity: 0.15,
         shadowRadius: 10,
         elevation: 3,
     },
     name: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#0f172a'
+        color: '#ffffff'
     },
     badgeRow: {
         flexDirection: 'row-reverse',
@@ -263,39 +283,39 @@ const styles = StyleSheet.create({
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#fef3c7',
+        backgroundColor: 'rgba(245, 158, 11, 0.15)',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#fde68a',
+        borderColor: 'rgba(245, 158, 11, 0.4)',
     },
     vipBadgeText: {
         fontSize: 12,
         fontWeight: 'bold',
-        color: '#d97706',
+        color: '#f59e0b',
     },
     regularBadge: {
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#eff6ff',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#bfdbfe',
+        borderColor: 'rgba(239, 68, 68, 0.3)',
     },
     regularBadgeText: {
         fontSize: 12,
         fontWeight: 'bold',
-        color: '#2563eb',
+        color: '#ef4444',
     },
     phoneBadge: {
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#f1f5f9',
+        backgroundColor: '#27272a',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 20,
@@ -303,24 +323,24 @@ const styles = StyleSheet.create({
     phoneBadgeText: {
         fontSize: 12,
         fontWeight: '600',
-        color: '#475569',
+        color: '#a1a1aa',
     },
     section: {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#e2e8f0',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         overflow: 'hidden',
-        shadowColor: '#0f172a',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
+        shadowOpacity: 0.1,
         shadowRadius: 6,
         elevation: 2,
     },
     sectionTitle: {
         fontSize: 13,
         fontWeight: 'bold',
-        color: '#64748b',
+        color: '#ef4444',
         paddingHorizontal: 16,
         paddingTop: 14,
         paddingBottom: 8,
@@ -335,7 +355,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         borderTopWidth: 1,
-        borderTopColor: '#f1f5f9'
+        borderTopColor: 'rgba(39, 39, 42, 0.8)'
     },
     rowLeft: {
         flexDirection: 'row-reverse',
@@ -346,64 +366,64 @@ const styles = StyleSheet.create({
         width: 36,
         height: 36,
         borderRadius: 18,
-        backgroundColor: '#eff6ff',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         justifyContent: 'center',
         alignItems: 'center',
     },
     rowIconCircleDanger: {
-        backgroundColor: '#fef2f2',
+        backgroundColor: 'rgba(220, 38, 38, 0.2)',
     },
     rowTitle: {
-        color: '#0f172a',
+        color: '#ffffff',
         fontSize: 15,
         fontWeight: '600',
         textAlign: 'right'
     },
     rowTitleDanger: {
-        color: '#dc2626',
+        color: '#ef4444',
         textAlign: 'right'
     },
     rowSubtitle: {
-        color: '#64748b',
+        color: '#a1a1aa',
         fontSize: 12,
         textAlign: 'right',
         marginTop: 1,
     },
     rowDanger: {
-        backgroundColor: '#fff5f5'
+        backgroundColor: 'rgba(239, 68, 68, 0.05)'
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#09090b',
         gap: 16
     },
     loadingSpinner: {
         width: 80,
         height: 80,
         borderRadius: 40,
-        backgroundColor: '#eff6ff',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 2,
-        borderColor: '#dbeafe'
+        borderColor: 'rgba(239, 68, 68, 0.3)'
     },
     loadingText: {
         fontSize: 16,
-        color: '#64748b',
+        color: '#a1a1aa',
         fontWeight: '500'
     },
     errorContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#09090b',
         gap: 16
     },
     errorText: {
         fontSize: 16,
-        color: '#64748b',
+        color: '#a1a1aa',
         fontWeight: '500'
     }
 })

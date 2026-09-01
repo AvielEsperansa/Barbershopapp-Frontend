@@ -111,9 +111,12 @@ export default function EditProfile() {
     }
 
     return (
-        <SafeScreen backgroundColor="#f8fafc">
-            <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 30 }]}>
-                {/* Header Nav */}
+        <SafeScreen backgroundColor="#09090b">
+            <ScrollView style={{ backgroundColor: "#09090b" }} contentContainerStyle={styles.container}>
+                {/* Glowing Red Background Orbs */}
+                <View style={styles.orbTopRight} />
+                <View style={styles.orbBottomLeft} />
+
                 <View style={styles.headerRow}>
                     <Pressable
                         onPress={() => {
@@ -122,7 +125,7 @@ export default function EditProfile() {
                         }}
                         style={styles.backBtn}
                     >
-                        <MaterialCommunityIcons name="arrow-right" size={22} color="#0f172a" />
+                        <MaterialCommunityIcons name="arrow-right" size={22} color="#ef4444" />
                         <Text style={styles.backBtnText}>חזרה</Text>
                     </Pressable>
                     <Text style={styles.title}>עריכת פרטים אישיים ✏️</Text>
@@ -133,11 +136,11 @@ export default function EditProfile() {
                 <View style={styles.card}>
                     <View style={styles.field}>
                         <Text style={styles.label}>שם פרטי</Text>
-                        <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="ישראל" textAlign="right" />
+                        <TextInput style={styles.input} value={firstName} onChangeText={setFirstName} placeholder="ישראל" placeholderTextColor="#71717a" textAlign="right" />
                     </View>
                     <View style={styles.field}>
                         <Text style={styles.label}>שם משפחה</Text>
-                        <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="ישראלי" textAlign="right" />
+                        <TextInput style={styles.input} value={lastName} onChangeText={setLastName} placeholder="ישראלי" placeholderTextColor="#71717a" textAlign="right" />
                     </View>
                     <View style={styles.field}>
                         <Text style={styles.label}>מספר טלפון (נעול)</Text>
@@ -184,7 +187,25 @@ const styles = StyleSheet.create({
     container: {
         padding: 16,
         gap: 16,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#09090b'
+    },
+    orbTopRight: {
+        position: 'absolute',
+        top: -60,
+        right: -60,
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    },
+    orbBottomLeft: {
+        position: 'absolute',
+        bottom: -60,
+        left: -60,
+        width: 260,
+        height: 260,
+        borderRadius: 130,
+        backgroundColor: 'rgba(220, 38, 38, 0.08)',
     },
     headerRow: {
         flexDirection: 'row-reverse',
@@ -199,34 +220,36 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         paddingHorizontal: 10,
         borderRadius: 10,
-        backgroundColor: '#e2e8f0',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.3)',
     },
     backBtnText: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#0f172a',
+        color: '#ef4444',
     },
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#0f172a',
+        color: '#ffffff',
         textAlign: 'right',
     },
     error: {
-        color: '#dc2626',
+        color: '#ef4444',
         textAlign: 'center',
         fontWeight: '500',
     },
     card: {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         borderRadius: 20,
         padding: 20,
         gap: 16,
         borderWidth: 1,
-        borderColor: '#e2e8f0',
-        shadowColor: '#0f172a',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.04,
+        shadowOpacity: 0.1,
         shadowRadius: 8,
         elevation: 2,
     },
@@ -234,42 +257,42 @@ const styles = StyleSheet.create({
         gap: 6
     },
     label: {
-        color: '#475569',
+        color: '#a1a1aa',
         fontSize: 14,
         fontWeight: '600',
         textAlign: 'right'
     },
     input: {
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#27272a',
         borderWidth: 1.5,
-        borderColor: '#cbd5e1',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         borderRadius: 14,
         paddingHorizontal: 14,
         paddingVertical: 12,
         fontSize: 16,
-        color: '#0f172a',
+        color: '#ffffff',
     },
     disabledInput: {
-        backgroundColor: '#f1f5f9',
-        borderColor: '#e2e8f0',
-        color: '#64748b',
+        backgroundColor: '#18181b',
+        borderColor: '#27272a',
+        color: '#a1a1aa',
         fontWeight: '600'
     },
     disabledNote: {
         fontSize: 12,
-        color: '#64748b',
+        color: '#71717a',
         textAlign: 'right',
         marginTop: 2
     },
     saveButton: {
-        backgroundColor: '#0f172a',
+        backgroundColor: '#dc2626',
         paddingVertical: 16,
         borderRadius: 14,
         alignItems: 'center',
         marginTop: 8,
-        shadowColor: '#0f172a',
+        shadowColor: '#dc2626',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.35,
         shadowRadius: 6,
         elevation: 3,
     },
@@ -279,13 +302,15 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
     cancelButton: {
-        backgroundColor: '#f1f5f9',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        borderColor: 'rgba(239, 68, 68, 0.3)',
+        borderWidth: 1,
         paddingVertical: 14,
         borderRadius: 14,
         alignItems: 'center',
     },
     cancelButtonText: {
-        color: '#0f172a',
+        color: '#ef4444',
         fontWeight: '600',
         fontSize: 15,
     }

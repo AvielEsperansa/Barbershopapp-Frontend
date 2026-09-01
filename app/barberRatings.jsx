@@ -135,12 +135,16 @@ export default function BarberRatings() {
     }
 
     return (
-        <SafeScreen backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#09090b">
             <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+                {/* Glowing Red Background Orbs */}
+                <View style={styles.orbTopRight} />
+                <View style={styles.orbBottomLeft} />
+
                 {/* Header */}
                 <View style={styles.header}>
                     <Pressable onPress={() => router.back()} style={styles.backButton}>
-                        <MaterialCommunityIcons name="arrow-right" size={24} color="#111827" />
+                        <MaterialCommunityIcons name="arrow-right" size={24} color="#ef4444" />
                         <Text style={styles.backText}>חזרה</Text>
                     </Pressable>
                     <Text style={styles.title}>דירוגים וביקורות</Text>
@@ -250,7 +254,25 @@ export default function BarberRatings() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#09090b'
+    },
+    orbTopRight: {
+        position: 'absolute',
+        top: -60,
+        right: -60,
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    },
+    orbBottomLeft: {
+        position: 'absolute',
+        bottom: -60,
+        left: -60,
+        width: 260,
+        height: 260,
+        borderRadius: 130,
+        backgroundColor: 'rgba(220, 38, 38, 0.08)',
     },
     content: {
         padding: 16,
@@ -267,17 +289,22 @@ const styles = StyleSheet.create({
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 4,
-        padding: 8
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.3)',
     },
     backText: {
-        fontSize: 16,
-        color: '#111827',
-        fontWeight: '500'
+        fontSize: 14,
+        color: '#ef4444',
+        fontWeight: 'bold'
     },
     title: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: '700',
-        color: '#111827',
+        color: '#ffffff',
         flex: 1,
         textAlign: 'right'
     },
@@ -288,23 +315,23 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         padding: 20,
-        borderRadius: 12,
+        borderRadius: 16,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: 'rgba(239, 68, 68, 0.25)'
     },
     statNumber: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#111827',
+        color: '#ffffff',
         marginTop: 8,
         marginBottom: 4
     },
     statLabel: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'center'
     },
     starsContainer: {
@@ -313,16 +340,16 @@ const styles = StyleSheet.create({
         marginTop: 4
     },
     section: {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         overflow: 'hidden'
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#111827',
+        color: '#ffffff',
         padding: 16,
         paddingBottom: 8,
         textAlign: 'right'
@@ -334,18 +361,18 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 18,
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'center'
     },
     emptySubtext: {
         fontSize: 14,
-        color: '#9ca3af',
+        color: '#71717a',
         textAlign: 'center'
     },
     ratingCard: {
         padding: 16,
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6',
+        borderTopColor: 'rgba(39, 39, 42, 0.8)',
         gap: 12
     },
     ratingHeader: {
@@ -361,7 +388,7 @@ const styles = StyleSheet.create({
     customerName: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#111827'
+        color: '#ffffff'
     },
     ratingStars: {
         flexDirection: 'row-reverse',
@@ -377,25 +404,25 @@ const styles = StyleSheet.create({
     },
     detailText: {
         fontSize: 14,
-        color: '#6b7280'
+        color: '#a1a1aa'
     },
     reviewContainer: {
-        backgroundColor: '#f9fafb',
+        backgroundColor: '#27272a',
         padding: 12,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: 'rgba(239, 68, 68, 0.2)'
     },
     reviewLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#111827',
+        color: '#ffffff',
         marginBottom: 4,
         textAlign: 'right'
     },
     reviewText: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#d4d4d8',
         textAlign: 'right',
         lineHeight: 20
     },
@@ -405,25 +432,25 @@ const styles = StyleSheet.create({
     },
     ratingDate: {
         fontSize: 12,
-        color: '#9ca3af',
+        color: '#71717a',
         textAlign: 'right'
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#09090b',
         gap: 16
     },
     loadingText: {
         fontSize: 18,
-        color: '#6b7280'
+        color: '#a1a1aa'
     },
     errorContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#09090b',
         padding: 20,
         gap: 16
     },
@@ -433,7 +460,7 @@ const styles = StyleSheet.create({
         textAlign: 'center'
     },
     retryButton: {
-        backgroundColor: '#3b82f6',
+        backgroundColor: '#dc2626',
         paddingHorizontal: 24,
         paddingVertical: 12,
         borderRadius: 8
@@ -444,7 +471,7 @@ const styles = StyleSheet.create({
         fontSize: 16
     },
     debugContainer: {
-        backgroundColor: '#f3f4f6',
+        backgroundColor: '#27272a',
         padding: 12,
         borderRadius: 8,
         marginBottom: 16

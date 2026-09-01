@@ -1,14 +1,14 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { router } from 'expo-router'
-import React, { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
 import { Calendar } from 'react-native-calendars'
 import config from '../../config'
 import apiClient from '../../lib/apiClient'
-import SafeScreen from '../components/SafeScreen'
 
 export default function Dashboard() {
     const [barberId, setBarberId] = useState('')
+    const [barberUser, setBarberUser] = useState(null)
     const [loading, setLoading] = useState(false)
     const [appointmentsByDate, setAppointmentsByDate] = useState({})
     const [markedDates, setMarkedDates] = useState({})
@@ -23,6 +23,7 @@ export default function Dashboard() {
                 if (response.ok) {
                     const data = await response.json()
                     setBarberId(data.user._id)
+                    setBarberUser(data.user)
                 }
             } catch { }
         }
@@ -96,8 +97,16 @@ export default function Dashboard() {
     const todayKey = useMemo(() => new Date().toISOString().split('T')[0], [])
     const todaysAppointments = useMemo(() => appointmentsByDate[todayKey] || [], [appointmentsByDate, todayKey])
 
+    const getGreeting = () => {
+        const hour = new Date().getHours()
+        if (hour >= 5 && hour < 12) return 'בוקר טוב ☀️'
+        if (hour >= 12 && hour < 17) return 'צהריים טובים 🌤️'
+        if (hour >= 17 && hour < 22) return 'ערב טוב 🌙'
+        return 'לילה טוב 🌌'
+    }
+
     return (
-        <SafeScreen backgroundColor="#0f172a" statusBarStyle="light">
+        <View style={styles.container}>
             <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
                 {/* Header */}
                 <View style={styles.header}>
@@ -105,8 +114,11 @@ export default function Dashboard() {
                         <MaterialCommunityIcons name="view-dashboard-variant" size={28} color="#3b82f6" />
                     </View>
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.title}>דשבורד הספר ✂️</Text>
-                        <Text style={styles.subtitle}>ברוך הבא למערכת הניהול</Text>
+                        <Text style={styles.greetingText}>{getGreeting()}</Text>
+                        <Text style={styles.title}>
+                            {barberUser?.firstName ? `${barberUser.firstName} ${barberUser.lastName || ''}`.trim() : 'דשבורד הספר'} ✂️
+                        </Text>
+                        <Text style={styles.subtitle}>דשבורד ניהול המספרה</Text>
                     </View>
                 </View>
 
@@ -357,7 +369,7 @@ export default function Dashboard() {
                     </View>
                 </View>
             </Modal>
-        </SafeScreen>
+        </View>
     )
 }
 
@@ -380,6 +392,13 @@ const styles = StyleSheet.create({
         backgroundColor: 'rgba(59, 130, 246, 0.15)',
         justifyContent: 'center',
         alignItems: 'center',
+    },
+    greetingText: {
+        fontSize: 13,
+        fontWeight: '600',
+        color: '#3b82f6',
+        textAlign: 'right',
+        marginBottom: 2,
     },
     title: {
         fontSize: 22,

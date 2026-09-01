@@ -204,12 +204,16 @@ export default function HaircutHistory() {
     }
 
     return (
-        <SafeScreen backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#09090b">
             <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+                {/* Glowing Red Background Orbs */}
+                <View style={styles.orbTopRight} />
+                <View style={styles.orbBottomLeft} />
+
                 {/* Header */}
                 <View style={styles.header}>
                     <Pressable onPress={() => router.back()} style={styles.backButton}>
-                        <MaterialCommunityIcons name="arrow-right" size={24} color="#111827" />
+                        <MaterialCommunityIcons name="arrow-right" size={24} color="#ef4444" />
                         <Text style={styles.backText}>חזרה</Text>
                     </Pressable>
                     <Text style={styles.title}>היסטוריית תספורות</Text>
@@ -414,7 +418,25 @@ export default function HaircutHistory() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#09090b'
+    },
+    orbTopRight: {
+        position: 'absolute',
+        top: -60,
+        right: -60,
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    },
+    orbBottomLeft: {
+        position: 'absolute',
+        bottom: -60,
+        left: -60,
+        width: 260,
+        height: 260,
+        borderRadius: 130,
+        backgroundColor: 'rgba(220, 38, 38, 0.08)',
     },
     content: {
         padding: 16,
@@ -431,17 +453,22 @@ const styles = StyleSheet.create({
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 4,
-        padding: 8
+        paddingVertical: 6,
+        paddingHorizontal: 10,
+        borderRadius: 10,
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.3)',
     },
     backText: {
-        fontSize: 16,
-        color: '#111827',
-        fontWeight: '500'
+        fontSize: 14,
+        color: '#ef4444',
+        fontWeight: 'bold'
     },
     title: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: '700',
-        color: '#111827',
+        color: '#ffffff',
         flex: 1,
         textAlign: 'right'
     },
@@ -452,36 +479,36 @@ const styles = StyleSheet.create({
     },
     statCard: {
         flex: 1,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         padding: 20,
-        borderRadius: 12,
+        borderRadius: 16,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: 'rgba(239, 68, 68, 0.25)'
     },
     statNumber: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#111827',
+        color: '#ffffff',
         marginTop: 8,
         marginBottom: 4
     },
     statLabel: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'center'
     },
     section: {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         overflow: 'hidden'
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#111827',
+        color: '#ffffff',
         padding: 16,
         paddingBottom: 8,
         textAlign: 'right'
@@ -493,18 +520,18 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 18,
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'center'
     },
     emptySubtext: {
         fontSize: 14,
-        color: '#9ca3af',
+        color: '#71717a',
         textAlign: 'center'
     },
     appointmentCard: {
         padding: 16,
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6',
+        borderTopColor: 'rgba(39, 39, 42, 0.8)',
         gap: 12
     },
     appointmentHeader: {
@@ -520,7 +547,7 @@ const styles = StyleSheet.create({
     customerName: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#111827'
+        color: '#ffffff'
     },
     ratingContainer: {
         flexDirection: 'row-reverse',
@@ -530,11 +557,11 @@ const styles = StyleSheet.create({
     ratingText: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#10b981'
+        color: '#ef4444'
     },
     noRatingText: {
         fontSize: 14,
-        color: '#9ca3af'
+        color: '#71717a'
     },
     appointmentDetails: {
         gap: 8
@@ -546,25 +573,25 @@ const styles = StyleSheet.create({
     },
     detailText: {
         fontSize: 14,
-        color: '#6b7280'
+        color: '#a1a1aa'
     },
     notesContainer: {
-        backgroundColor: '#f9fafb',
+        backgroundColor: '#27272a',
         padding: 12,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: 'rgba(239, 68, 68, 0.2)'
     },
     notesLabel: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#111827',
+        color: '#ffffff',
         marginBottom: 4,
         textAlign: 'right'
     },
     notesText: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#d4d4d8',
         textAlign: 'right',
         lineHeight: 20
     },
@@ -572,18 +599,18 @@ const styles = StyleSheet.create({
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#09090b',
         gap: 16
     },
     loadingText: {
         fontSize: 18,
-        color: '#6b7280'
+        color: '#a1a1aa'
     },
     errorContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#09090b',
         padding: 20,
         gap: 16
     },
@@ -593,7 +620,7 @@ const styles = StyleSheet.create({
         textAlign: 'center'
     },
     retryButton: {
-        backgroundColor: '#3b82f6',
+        backgroundColor: '#dc2626',
         paddingHorizontal: 24,
         paddingVertical: 12,
         borderRadius: 8
@@ -611,7 +638,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 6,
-        backgroundColor: '#f59e0b',
+        backgroundColor: '#dc2626',
         paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 8,
@@ -627,7 +654,7 @@ const styles = StyleSheet.create({
         right: 0,
         top: 0,
         bottom: 0,
-        backgroundColor: 'rgba(0,0,0,0.4)',
+        backgroundColor: 'rgba(0,0,0,0.7)',
         justifyContent: 'center',
         alignItems: 'center',
         padding: 16
@@ -637,10 +664,12 @@ const styles = StyleSheet.create({
         maxHeight: '90%'
     },
     modalContent: {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#18181b',
         borderRadius: 16,
         padding: 16,
-        width: '100%'
+        width: '100%',
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.3)',
     },
     modalHeader: {
         flexDirection: 'row',
@@ -651,14 +680,14 @@ const styles = StyleSheet.create({
     modalTitle: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#111827'
+        color: '#ffffff'
     },
     modalClose: {
         padding: 4
     },
     modalLabel: {
         fontSize: 14,
-        color: '#374151',
+        color: '#a1a1aa',
         marginTop: 8,
         marginBottom: 6,
         textAlign: 'right'
@@ -673,13 +702,13 @@ const styles = StyleSheet.create({
     },
     reviewInput: {
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         borderRadius: 8,
         padding: 10,
         minHeight: 80,
-        backgroundColor: '#fafafa',
+        backgroundColor: '#27272a',
         fontSize: 14,
-        color: '#111827',
+        color: '#ffffff',
         textAlign: 'right'
     },
     modalActions: {
@@ -690,18 +719,20 @@ const styles = StyleSheet.create({
     },
     cancelBtn: {
         flex: 1,
-        backgroundColor: '#f3f4f6',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        borderColor: 'rgba(239, 68, 68, 0.3)',
+        borderWidth: 1,
         paddingVertical: 12,
         borderRadius: 8,
         alignItems: 'center'
     },
     cancelBtnText: {
-        color: '#6b7280',
+        color: '#ef4444',
         fontWeight: '600'
     },
     submitBtn: {
         flex: 1,
-        backgroundColor: '#3b82f6',
+        backgroundColor: '#dc2626',
         paddingVertical: 12,
         borderRadius: 8,
         alignItems: 'center'
@@ -719,22 +750,22 @@ const styles = StyleSheet.create({
         gap: 8,
         padding: 10,
         borderRadius: 8,
-        backgroundColor: '#fef2f2',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         borderWidth: 1,
-        borderColor: '#fee2e2',
+        borderColor: 'rgba(239, 68, 68, 0.3)',
         marginBottom: 8
     },
     errorBannerText: {
-        color: '#b91c1c',
+        color: '#ef4444',
         fontSize: 13,
         textAlign: 'right'
     },
     ratingDisplay: {
-        backgroundColor: '#fef3c7',
+        backgroundColor: '#27272a',
         padding: 12,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#f59e0b',
+        borderColor: 'rgba(245, 158, 11, 0.3)',
         gap: 6
     },
     ratingStars: {
@@ -743,7 +774,7 @@ const styles = StyleSheet.create({
     },
     ratingReview: {
         fontSize: 14,
-        color: '#92400e',
+        color: '#f59e0b',
         textAlign: 'right',
         fontStyle: 'italic'
     },
@@ -756,7 +787,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#3b82f6',
+        backgroundColor: '#dc2626',
         paddingHorizontal: 8,
         paddingVertical: 6,
         borderRadius: 6,

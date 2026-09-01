@@ -262,14 +262,14 @@ export default function CustomerAppointment() {
             marks[key] = {
                 disabled: isPast, // נבטל רק תאריכים בעבר
                 disableTouchEvent: isPast, // נמנע לחיצה על תאריכים בעבר
-                textColor: isPast ? '#d1d5db' : '#111827', // צבע טקסט אפור לתאריכים בעבר
-                selectedColor: '#3b82f6'
+                textColor: isPast ? '#3f3f46' : '#ffffff', // צבע טקסט כהה לתאריכים בעבר
+                selectedColor: '#dc2626'
             }
         }
 
         if (selectedDate) {
             const k = typeof selectedDate === 'string' ? selectedDate : toDateKey(selectedDate)
-            marks[k] = { ...(marks[k] || {}), selected: true, selectedColor: '#3b82f6' }
+            marks[k] = { ...(marks[k] || {}), selected: true, selectedColor: '#dc2626' }
         }
         return marks
     }
@@ -624,14 +624,22 @@ export default function CustomerAppointment() {
                             }}
                             markedDates={getMarkedDates()}
                             theme={{
-                                todayTextColor: '#2563eb',
-                                arrowColor: '#111827',
-                                textDayFontFamily: undefined,
-                                textMonthFontFamily: undefined,
-                                textDayHeaderFontFamily: undefined,
+                                backgroundColor: '#18181b',
+                                calendarBackground: '#18181b',
+                                textSectionTitleColor: '#a1a1aa',
+                                selectedDayBackgroundColor: '#dc2626',
+                                selectedDayTextColor: '#ffffff',
+                                todayTextColor: '#ef4444',
+                                dayTextColor: '#ffffff',
+                                textDisabledColor: '#3f3f46',
+                                dotColor: '#ef4444',
+                                selectedDotColor: '#ffffff',
+                                arrowColor: '#ef4444',
+                                monthTextColor: '#ffffff',
+                                indicatorColor: '#ef4444',
                                 'stylesheet.calendar.header': {
                                     dayHeader: {
-                                        color: '#6b7280',
+                                        color: '#a1a1aa',
                                         fontWeight: '600'
                                     }
                                 }
@@ -730,20 +738,20 @@ export default function CustomerAppointment() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#09090b'
     },
     headerContainer: {
         paddingTop: 20,
         paddingBottom: 14,
         paddingHorizontal: 16,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.95)',
         borderBottomWidth: 1,
-        borderBottomColor: '#f1f5f9',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.04,
-        shadowRadius: 6,
-        elevation: 2,
+        borderBottomColor: 'rgba(239, 68, 68, 0.25)',
+        shadowColor: '#ef4444',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 8,
+        elevation: 3,
         marginBottom: 12,
     },
     headerRow: {
@@ -759,17 +767,19 @@ const styles = StyleSheet.create({
         paddingVertical: 6,
         paddingHorizontal: 10,
         borderRadius: 10,
-        backgroundColor: '#f1f5f9'
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.3)',
     },
     backText: {
-        color: '#1f2937',
+        color: '#ef4444',
         fontSize: 14,
         fontWeight: '600'
     },
     title: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#0f172a',
+        color: '#ffffff',
         textAlign: 'right'
     },
     wizardRow: {
@@ -786,31 +796,31 @@ const styles = StyleSheet.create({
         width: 32,
         height: 32,
         borderRadius: 16,
-        backgroundColor: '#f1f5f9',
+        backgroundColor: '#27272a',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#cbd5e1',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
     },
     wizardIconActive: {
-        backgroundColor: '#2563eb',
-        borderColor: '#2563eb',
+        backgroundColor: '#dc2626',
+        borderColor: '#ef4444',
     },
     wizardIconDone: {
-        backgroundColor: '#dbeafe',
-        borderColor: '#93c5fd',
+        backgroundColor: 'rgba(239, 68, 68, 0.2)',
+        borderColor: '#ef4444',
     },
     wizardLabel: {
         fontSize: 11,
         fontWeight: '600',
-        color: '#94a3b8',
+        color: '#a1a1aa',
     },
     wizardLabelActive: {
-        color: '#2563eb',
+        color: '#ef4444',
         fontWeight: 'bold',
     },
     wizardLabelDone: {
-        color: '#1e40af',
+        color: '#f87171',
     },
     list: {
         padding: 16,
@@ -821,38 +831,40 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 14,
         padding: 16,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#e2e8f0',
-        shadowColor: '#0f172a',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.05,
+        shadowOpacity: 0.1,
         shadowRadius: 8,
         elevation: 2,
     },
     cardSelected: {
-        borderColor: '#2563eb',
-        backgroundColor: '#eff6ff',
+        borderColor: '#ef4444',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         borderWidth: 1.5,
     },
     avatarCircle: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#dbeafe',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         justifyContent: 'center',
         alignItems: 'center',
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.3)',
     },
     cardTitle: {
         fontSize: 16,
-        color: '#0f172a',
+        color: '#ffffff',
         fontWeight: 'bold',
         textAlign: 'right',
     },
     cardSubtitle: {
         fontSize: 13,
-        color: '#64748b',
+        color: '#a1a1aa',
         textAlign: 'right',
     },
     badgeRow: {
@@ -865,45 +877,47 @@ const styles = StyleSheet.create({
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 3,
-        backgroundColor: '#fef3c7',
+        backgroundColor: 'rgba(245, 158, 11, 0.15)',
         paddingHorizontal: 6,
         paddingVertical: 2,
         borderRadius: 6,
+        borderWidth: 1,
+        borderColor: 'rgba(245, 158, 11, 0.3)',
     },
     ratingText: {
         fontSize: 11,
         fontWeight: 'bold',
-        color: '#d97706',
+        color: '#f59e0b',
     },
     durationPill: {
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#f1f5f9',
+        backgroundColor: '#27272a',
         paddingHorizontal: 8,
         paddingVertical: 2,
         borderRadius: 6,
     },
     durationText: {
         fontSize: 12,
-        color: '#475569',
+        color: '#d4d4d8',
         fontWeight: '500',
     },
     priceText: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#059669',
+        color: '#ef4444',
     },
     sectionTitle: {
         fontSize: 17,
         fontWeight: 'bold',
-        color: '#0f172a',
+        color: '#ffffff',
         textAlign: 'right'
     },
     slotPill: {
         borderWidth: 1.5,
-        borderColor: '#e2e8f0',
-        backgroundColor: '#ffffff',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
+        backgroundColor: '#27272a',
         paddingVertical: 12,
         paddingHorizontal: 10,
         borderRadius: 14,
@@ -911,21 +925,21 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
+        shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 1,
     },
     slotPillSelected: {
-        borderColor: '#0f172a',
-        backgroundColor: '#0f172a',
+        borderColor: '#ef4444',
+        backgroundColor: '#dc2626',
     },
     slotPillDisabled: {
-        backgroundColor: '#f1f5f9',
-        borderColor: '#e2e8f0',
-        opacity: 0.5
+        backgroundColor: '#18181b',
+        borderColor: '#27272a',
+        opacity: 0.4
     },
     slotPillText: {
-        color: '#0f172a',
+        color: '#ffffff',
         fontSize: 14,
         fontWeight: 'bold',
     },
@@ -944,7 +958,7 @@ const styles = StyleSheet.create({
     },
     helper: {
         textAlign: 'center',
-        color: '#6b7280',
+        color: '#a1a1aa',
         marginTop: 8,
         marginBottom: 8,
         fontSize: 14
@@ -956,33 +970,39 @@ const styles = StyleSheet.create({
     summaryRow: {
         flexDirection: 'row-reverse',
         justifyContent: 'space-between',
-        backgroundColor: '#fff',
+        backgroundColor: '#27272a',
         padding: 12,
         borderRadius: 10,
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: 'rgba(239, 68, 68, 0.2)'
     },
     summaryLabel: {
-        color: '#6b7280'
+        color: '#a1a1aa'
     },
     summaryValue: {
-        color: '#111827',
+        color: '#ffffff',
         fontWeight: '600'
     },
     notes: {
         minHeight: 80,
-        backgroundColor: '#fff',
+        backgroundColor: '#27272a',
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         borderRadius: 10,
         padding: 10,
-        textAlign: 'right'
+        textAlign: 'right',
+        color: '#ffffff'
     },
     confirmButton: {
-        backgroundColor: '#10b981',
+        backgroundColor: '#dc2626',
         paddingVertical: 14,
         borderRadius: 12,
-        alignItems: 'center'
+        alignItems: 'center',
+        shadowColor: '#dc2626',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        elevation: 4,
     },
     confirmButtonText: {
         color: '#fff',
@@ -990,24 +1010,26 @@ const styles = StyleSheet.create({
         fontSize: 16
     },
     cancelButton: {
-        backgroundColor: '#ef4444',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         paddingVertical: 12,
         borderRadius: 10,
         alignItems: 'center',
-        marginTop: 8
+        marginTop: 8,
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.3)',
     },
     cancelButtonText: {
-        color: '#fff',
+        color: '#ef4444',
         fontWeight: '700'
     },
     sectionNext: {
         marginTop: 8,
         padding: 16,
         gap: 8,
-        backgroundColor: '#fff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: 'rgba(239, 68, 68, 0.25)'
     },
     loading: {
         position: 'absolute',
@@ -1017,19 +1039,19 @@ const styles = StyleSheet.create({
         bottom: 0,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: 'rgba(255,255,255,0.6)'
+        backgroundColor: 'rgba(9,9,11,0.8)'
     },
     error: {
         paddingHorizontal: 16,
         paddingVertical: 8
     },
     errorText: {
-        color: '#b91c1c',
+        color: '#ef4444',
         textAlign: 'center'
     },
     empty: {
         textAlign: 'center',
-        color: '#6b7280',
+        color: '#a1a1aa',
         marginTop: 20
     }
 })

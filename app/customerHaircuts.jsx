@@ -203,9 +203,9 @@ export default function CustomerHaircuts() {
 
     if (loading) {
         return (
-            <SafeScreen backgroundColor="#f8fafc">
+            <SafeScreen backgroundColor="#09090b">
                 <View style={styles.loadingContainer}>
-                    <ActivityIndicator size="large" color="#3b82f6" />
+                    <ActivityIndicator size="large" color="#ef4444" />
                     <Text style={styles.loadingText}>טוען היסטוריית תספורות...</Text>
                 </View>
             </SafeScreen>
@@ -213,14 +213,18 @@ export default function CustomerHaircuts() {
     }
 
     return (
-        <SafeScreen backgroundColor="#f8fafc">
+        <SafeScreen backgroundColor="#09090b">
             <View style={styles.container}>
+                {/* Glowing Red Background Orbs */}
+                <View style={styles.orbTopRight} />
+                <View style={styles.orbBottomLeft} />
+
                 <View style={styles.header}>
                     <TouchableOpacity
                         style={styles.backButton}
                         onPress={() => router.back()}
                     >
-                        <MaterialCommunityIcons name="arrow-right" size={24} color="#3b82f6" />
+                        <MaterialCommunityIcons name="arrow-right" size={24} color="#ef4444" />
                     </TouchableOpacity>
                     <View style={styles.headerInfo}>
                         <Text style={styles.title}>היסטוריית תספורות</Text>
@@ -245,7 +249,7 @@ export default function CustomerHaircuts() {
 
                 {/* שדה חיפוש לפי תאריך */}
                 <View style={styles.searchContainer}>
-                    <MaterialCommunityIcons name="calendar-search" size={20} color="#6b7280" />
+                    <MaterialCommunityIcons name="calendar-search" size={20} color="#a1a1aa" />
                     <TextInput
                         style={styles.searchInput}
                         placeholder="חפש לפי תאריך (YYYY-MM-DD)..."
@@ -289,27 +293,45 @@ export default function CustomerHaircuts() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#09090b'
+    },
+    orbTopRight: {
+        position: 'absolute',
+        top: -60,
+        right: -60,
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    },
+    orbBottomLeft: {
+        position: 'absolute',
+        bottom: -60,
+        left: -60,
+        width: 260,
+        height: 260,
+        borderRadius: 130,
+        backgroundColor: 'rgba(220, 38, 38, 0.08)',
     },
     loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#09090b'
     },
     loadingText: {
         marginTop: 16,
         fontSize: 16,
-        color: '#6b7280'
+        color: '#a1a1aa'
     },
     header: {
         flexDirection: 'row',
         alignItems: 'center',
         paddingHorizontal: 16,
         paddingVertical: 16,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.95)',
         borderBottomWidth: 1,
-        borderBottomColor: '#e5e7eb'
+        borderBottomColor: 'rgba(239, 68, 68, 0.25)'
     },
     backButton: {
         marginRight: 12
@@ -320,32 +342,32 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: '700',
-        color: '#111827',
+        color: '#ffffff',
         textAlign: 'right'
     },
     customerName: {
         fontSize: 16,
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'right',
         marginTop: 4
     },
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: '#ffffff',
+        backgroundColor: '#27272a',
         marginHorizontal: 16,
         marginTop: 16,
         paddingHorizontal: 16,
         paddingVertical: 12,
         borderRadius: 12,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         gap: 12
     },
     searchInput: {
         flex: 1,
         fontSize: 16,
-        color: '#111827'
+        color: '#ffffff'
     },
     clearButton: {
         padding: 4
@@ -358,21 +380,21 @@ const styles = StyleSheet.create({
     },
     statItem: {
         flex: 1,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         padding: 16,
         borderRadius: 12,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: 'rgba(239, 68, 68, 0.25)'
     },
     statNumber: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#3b82f6'
+        color: '#ef4444'
     },
     statLabel: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#a1a1aa',
         marginTop: 4,
         textAlign: 'center'
     },
@@ -382,19 +404,19 @@ const styles = StyleSheet.create({
         paddingBottom: 100
     },
     appointmentCard: {
-        backgroundColor: '#ffffff',
-        borderRadius: 12,
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
+        borderRadius: 16,
         padding: 16,
         marginBottom: 12,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
-            height: 1,
+            height: 2,
         },
         shadowOpacity: 0.1,
-        shadowRadius: 2,
+        shadowRadius: 4,
         elevation: 2,
     },
     appointmentHeader: {
@@ -415,27 +437,27 @@ const styles = StyleSheet.create({
     serviceName: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#111827',
+        color: '#ffffff',
         textAlign: 'right'
     },
     serviceDescription: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'right',
         marginTop: 2
     },
     priceContainer: {
-        backgroundColor: '#f0f9ff',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#0ea5e9'
+        borderColor: 'rgba(239, 68, 68, 0.3)'
     },
     priceText: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#0ea5e9'
+        color: '#ef4444'
     },
     appointmentDetails: {
         gap: 8
@@ -447,7 +469,7 @@ const styles = StyleSheet.create({
     },
     detailText: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#a1a1aa',
         flex: 1,
         textAlign: 'right'
     },
@@ -457,7 +479,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
-        color: '#6b7280',
+        color: '#a1a1aa',
         marginTop: 16,
         textAlign: 'center'
     }

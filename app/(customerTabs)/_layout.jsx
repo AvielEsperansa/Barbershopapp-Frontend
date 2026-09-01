@@ -6,15 +6,17 @@ import SafeScreen from '../components/SafeScreen'
 
 export default function _layout() {
     return (
-        <SafeScreen backgroundColor="#f8fafc" >
-            <StatusBar barStyle="dark-content" backgroundColor="#ffffff" translucent={false} />
+        <SafeScreen backgroundColor="#09090b" >
+            <StatusBar barStyle="light-content" backgroundColor="#09090b" translucent={false} />
             <Tabs
                 screenOptions={{
                     headerShown: false,
                     tabBarShowLabel: true,
+                    tabBarActiveTintColor: '#ef4444',
+                    tabBarInactiveTintColor: '#71717a',
                     tabBarStyle: Platform.select({
-                        ios: { position: "absolute", backgroundColor: "white", height: 75 },
-                        default: { backgroundColor: "white", height: 75 },
+                        ios: { position: "absolute", backgroundColor: "#18181b", borderTopColor: "rgba(239, 68, 68, 0.25)", height: 75 },
+                        default: { backgroundColor: "#18181b", borderTopColor: "rgba(239, 68, 68, 0.25)", height: 75 },
                     }),
                 }}
             >

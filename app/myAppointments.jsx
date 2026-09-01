@@ -101,20 +101,27 @@ export default function MyAppointments() {
     )
 
     return (
-        <SafeScreen backgroundColor="#f8fafc">
-            <ScrollView contentContainerStyle={[styles.container, { paddingBottom: 24 }]}>
+        <SafeScreen backgroundColor="#09090b">
+            <ScrollView style={{ backgroundColor: "#09090b" }} contentContainerStyle={styles.container}>
+                {/* Glowing Red Background Orbs */}
+                <View style={styles.orbTopRight} />
+                <View style={styles.orbBottomLeft} />
+
                 <View style={styles.header}>
-                    <MaterialCommunityIcons name="calendar" size={22} color="#111827" />
-                    <Text style={styles.title}>התורים הקרובים שלי</Text>
+                    <MaterialCommunityIcons name="calendar-clock" size={24} color="#ef4444" />
+                    <Text style={styles.title}>התורים שלי</Text>
                 </View>
 
-                {!!error && <Text style={styles.error}>{error}</Text>}
                 {loading && (
-                    <View style={styles.loading}><ActivityIndicator size="large" color="#3b82f6" /></View>
+                    <View style={styles.loading}>
+                        <ActivityIndicator size="large" color="#ef4444" />
+                    </View>
                 )}
 
-                {appointments.length === 0 && !loading && (
-                    <Text style={styles.empty}>אין תורים להצגה</Text>
+                {!!error && <Text style={styles.error}>{error}</Text>}
+
+                {!loading && appointments.length === 0 && (
+                    <Text style={styles.empty}>אין תורים קרובים להצגה</Text>
                 )}
 
                 {appointments.map((appt) => (
@@ -147,7 +154,25 @@ const styles = StyleSheet.create({
     container: {
         padding: 16,
         gap: 12,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#09090b'
+    },
+    orbTopRight: {
+        position: 'absolute',
+        top: -60,
+        right: -60,
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    },
+    orbBottomLeft: {
+        position: 'absolute',
+        bottom: -60,
+        left: -60,
+        width: 260,
+        height: 260,
+        borderRadius: 130,
+        backgroundColor: 'rgba(220, 38, 38, 0.08)',
     },
     header: {
         flexDirection: 'row-reverse',
@@ -158,27 +183,29 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 18,
         fontWeight: '700',
-        color: '#111827'
+        color: '#ffffff'
     },
     card: {
-        backgroundColor: '#fff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         borderWidth: 1,
-        borderColor: '#e5e7eb',
-        borderRadius: 12,
-        padding: 12,
-        gap: 6
+        borderColor: 'rgba(239, 68, 68, 0.25)',
+        borderRadius: 16,
+        padding: 14,
+        gap: 8
     },
     row: {
         flexDirection: 'row-reverse',
         justifyContent: 'space-between'
     },
-    rowLabel: { color: '#6b7280' },
-    rowValue: { color: '#111827', fontWeight: '600' },
-    error: { color: '#b91c1c', textAlign: 'center' },
-    empty: { color: '#6b7280', textAlign: 'center', marginTop: 12 },
+    rowLabel: { color: '#a1a1aa' },
+    rowValue: { color: '#ffffff', fontWeight: '600' },
+    error: { color: '#ef4444', textAlign: 'center' },
+    empty: { color: '#a1a1aa', textAlign: 'center', marginTop: 12 },
     loading: { alignItems: 'center', paddingVertical: 20 },
     cancelButton: {
-        backgroundColor: '#b91c1c',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
+        borderColor: 'rgba(239, 68, 68, 0.3)',
+        borderWidth: 1,
         paddingVertical: 8,
         paddingHorizontal: 16,
         borderRadius: 8,

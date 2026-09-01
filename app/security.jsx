@@ -67,7 +67,7 @@ export default function Security() {
     const SecurityRow = ({ icon, title, subtitle, onPress, danger, children }) => (
         <View style={styles.row}>
             <View style={styles.rowLeft}>
-                <MaterialCommunityIcons name={icon} size={22} color={danger ? '#b91c1c' : '#111827'} />
+                <MaterialCommunityIcons name={icon} size={22} color={danger ? '#ef4444' : '#ef4444'} />
                 <View>
                     <Text style={[styles.rowTitle, danger && styles.rowTitleDanger]}>{title}</Text>
                     {!!subtitle && <Text style={styles.rowSubtitle}>{subtitle}</Text>}
@@ -78,11 +78,15 @@ export default function Security() {
     )
 
     return (
-        <SafeScreen backgroundColor="#f8fafc">
-            <ScrollView contentContainerStyle={styles.container}>
+        <SafeScreen backgroundColor="#09090b">
+            <ScrollView style={{ backgroundColor: "#09090b" }} contentContainerStyle={styles.container}>
+                {/* Glowing Red Background Orbs */}
+                <View style={styles.orbTopRight} />
+                <View style={styles.orbBottomLeft} />
+
                 <View style={styles.header}>
                     <Pressable onPress={() => router.back()} style={styles.backButton}>
-                        <MaterialCommunityIcons name="arrow-right" size={24} color="#111827" />
+                        <MaterialCommunityIcons name="arrow-right" size={24} color="#ef4444" />
                     </Pressable>
                     <Text style={styles.title}>הגדרות אבטחה</Text>
                 </View>
@@ -98,8 +102,9 @@ export default function Security() {
                             style={styles.input}
                             value={currentPassword}
                             onChangeText={setCurrentPassword}
-                            placeholder="הכנס סיסמה נוכחית"
                             secureTextEntry
+                            placeholder="הזן סיסמה נוכחית"
+                            placeholderTextColor="#71717a"
                             textAlign="right"
                         />
                     </View>
@@ -110,8 +115,9 @@ export default function Security() {
                             style={styles.input}
                             value={newPassword}
                             onChangeText={setNewPassword}
-                            placeholder="הכנס סיסמה חדשה"
                             secureTextEntry
+                            placeholder="לפחות 6 תווים"
+                            placeholderTextColor="#71717a"
                             textAlign="right"
                         />
                     </View>
@@ -122,18 +128,15 @@ export default function Security() {
                             style={styles.input}
                             value={confirmPassword}
                             onChangeText={setConfirmPassword}
-                            placeholder="הכנס שוב את הסיסמה החדשה"
                             secureTextEntry
+                            placeholder="הזן סיסמה חדשה שוב"
+                            placeholderTextColor="#71717a"
                             textAlign="right"
                         />
                     </View>
 
-                    <Pressable
-                        disabled={loading}
-                        onPress={onPasswordChange}
-                        style={[styles.saveButton, loading && { opacity: 0.7 }]}
-                    >
-                        <Text style={styles.saveButtonText}>שנה סיסמה</Text>
+                    <Pressable style={styles.saveButton} onPress={onPasswordChange} disabled={loading}>
+                        <Text style={styles.saveButtonText}>{loading ? 'עדכון...' : 'עדכן סיסמה'}</Text>
                     </Pressable>
                 </View>
 
@@ -146,7 +149,26 @@ const styles = StyleSheet.create({
     container: {
         padding: 16,
         gap: 16,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#09090b',
+        paddingBottom: 100
+    },
+    orbTopRight: {
+        position: 'absolute',
+        top: -60,
+        right: -60,
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    },
+    orbBottomLeft: {
+        position: 'absolute',
+        bottom: -60,
+        left: -60,
+        width: 260,
+        height: 260,
+        borderRadius: 130,
+        backgroundColor: 'rgba(220, 38, 38, 0.08)',
     },
     header: {
         flexDirection: 'row-reverse',
@@ -160,31 +182,31 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#111827',
+        color: '#ffffff',
         flex: 1,
         textAlign: 'right'
     },
     error: {
-        color: '#b91c1c',
+        color: '#ef4444',
         textAlign: 'center',
-        backgroundColor: '#fef2f2',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         padding: 12,
         borderRadius: 8,
         borderWidth: 1,
-        borderColor: '#fecaca'
+        borderColor: 'rgba(239, 68, 68, 0.3)'
     },
     section: {
-        backgroundColor: '#fff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         overflow: 'hidden',
         gap: 16
     },
     sectionTitle: {
         fontSize: 16,
         fontWeight: '700',
-        color: '#111827',
+        color: '#ffffff',
         paddingHorizontal: 16,
         paddingTop: 16,
         textAlign: 'right'
@@ -194,26 +216,32 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16
     },
     label: {
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'right',
         fontWeight: '500'
     },
     input: {
-        backgroundColor: '#f9fafb',
+        backgroundColor: '#27272a',
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         borderRadius: 10,
         paddingHorizontal: 12,
         paddingVertical: 10,
-        fontSize: 16
+        fontSize: 16,
+        color: '#ffffff'
     },
     saveButton: {
-        backgroundColor: '#3b82f6',
+        backgroundColor: '#dc2626',
         paddingVertical: 14,
         borderRadius: 12,
         alignItems: 'center',
         marginHorizontal: 16,
-        marginBottom: 16
+        marginBottom: 16,
+        shadowColor: '#dc2626',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 6,
+        elevation: 3,
     },
     saveButtonText: {
         color: '#fff',
@@ -227,7 +255,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'space-between',
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6'
+        borderTopColor: 'rgba(39, 39, 42, 0.8)'
     },
     rowLeft: {
         flexDirection: 'row-reverse',
@@ -235,12 +263,12 @@ const styles = StyleSheet.create({
         gap: 10
     },
     rowTitle: {
-        color: '#111827',
+        color: '#ffffff',
         fontWeight: '600',
         fontSize: 16
     },
     rowTitleDanger: {
-        color: '#b91c1c'
+        color: '#ef4444'
     },
     rowSubtitle: {
         color: '#6b7280',

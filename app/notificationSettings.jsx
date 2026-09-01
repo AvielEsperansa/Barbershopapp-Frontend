@@ -114,7 +114,7 @@ export default function NotificationSettings() {
     const NotificationRow = ({ icon, title, subtitle, value, onToggle, testAction }) => (
         <View style={styles.notificationRow}>
             <View style={styles.notificationInfo}>
-                <MaterialCommunityIcons name={icon} size={24} color="#3b82f6" />
+                <MaterialCommunityIcons name={icon} size={24} color="#ef4444" />
                 <View style={styles.notificationText}>
                     <Text style={styles.notificationTitle}>{title}</Text>
                     <Text style={styles.notificationSubtitle}>{subtitle}</Text>
@@ -130,18 +130,22 @@ export default function NotificationSettings() {
                 <Switch
                     value={value}
                     onValueChange={onToggle}
-                    trackColor={{ false: '#e5e7eb', true: '#3b82f6' }}
-                    thumbColor={value ? '#ffffff' : '#f3f4f6'}
+                    trackColor={{ false: '#27272a', true: '#dc2626' }}
+                    thumbColor={value ? '#ffffff' : '#71717a'}
                 />
             </View>
         </View>
     )
 
     return (
-        <SafeScreen backgroundColor="#f8fafc">
-            <ScrollView style={styles.container}>
+        <SafeScreen backgroundColor="#09090b">
+            <ScrollView style={{ backgroundColor: "#09090b" }} contentContainerStyle={styles.container}>
+                {/* Glowing Red Background Orbs */}
+                <View style={styles.orbTopRight} />
+                <View style={styles.orbBottomLeft} />
+
                 <View style={styles.header}>
-                    <MaterialCommunityIcons name="bell" size={48} color="#3b82f6" />
+                    <MaterialCommunityIcons name="bell" size={48} color="#ef4444" />
                     <Text style={styles.title}>הגדרות הודעות</Text>
                     <Text style={styles.subtitle}>נהל את ההודעות והתראות שלך</Text>
                 </View>
@@ -249,52 +253,70 @@ export default function NotificationSettings() {
 
 const styles = StyleSheet.create({
     container: {
-        flex: 1,
-        backgroundColor: '#f8fafc',
-        paddingBottom: 100
+        paddingTop: 16,
+        paddingBottom: 100,
+        backgroundColor: '#09090b',
+    },
+    orbTopRight: {
+        position: 'absolute',
+        top: -60,
+        right: -60,
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    },
+    orbBottomLeft: {
+        position: 'absolute',
+        bottom: -60,
+        left: -60,
+        width: 260,
+        height: 260,
+        borderRadius: 130,
+        backgroundColor: 'rgba(220, 38, 38, 0.08)',
     },
     header: {
         alignItems: 'center',
         paddingVertical: 24,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         marginHorizontal: 16,
         marginBottom: 16,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#e5e7eb'
+        borderColor: 'rgba(239, 68, 68, 0.25)'
     },
     title: {
         fontSize: 24,
         fontWeight: '700',
-        color: '#111827',
+        color: '#ffffff',
         marginTop: 12,
         marginBottom: 4
     },
     subtitle: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'center'
     },
     section: {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         marginHorizontal: 16,
         marginBottom: 16,
         borderRadius: 16,
         borderWidth: 1,
-        borderColor: '#e5e7eb',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         overflow: 'hidden'
     },
     sectionTitle: {
         fontSize: 18,
         fontWeight: '600',
-        color: '#111827',
+        color: '#ffffff',
         padding: 16,
         paddingBottom: 8,
         textAlign: 'right'
     },
     sectionSubtitle: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#a1a1aa',
         paddingHorizontal: 16,
         paddingBottom: 16,
         textAlign: 'right'
@@ -305,7 +327,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         padding: 16,
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6'
+        borderTopColor: 'rgba(39, 39, 42, 0.8)'
     },
     notificationInfo: {
         flexDirection: 'row-reverse',
@@ -319,12 +341,12 @@ const styles = StyleSheet.create({
     notificationTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#111827',
+        color: '#ffffff',
         textAlign: 'right'
     },
     notificationSubtitle: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'right',
         marginTop: 2
     },
@@ -334,7 +356,7 @@ const styles = StyleSheet.create({
         gap: 12
     },
     testButton: {
-        backgroundColor: '#10b981',
+        backgroundColor: '#dc2626',
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 4,
@@ -350,7 +372,7 @@ const styles = StyleSheet.create({
     scheduledNotification: {
         padding: 16,
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6'
+        borderTopColor: 'rgba(39, 39, 42, 0.8)'
     },
     scheduledInfo: {
         flexDirection: 'row-reverse',
@@ -360,18 +382,18 @@ const styles = StyleSheet.create({
     scheduledTitle: {
         fontSize: 16,
         fontWeight: '600',
-        color: '#111827',
+        color: '#ffffff',
         textAlign: 'right'
     },
     scheduledBody: {
         fontSize: 14,
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'right',
         marginTop: 2
     },
     scheduledDate: {
         fontSize: 12,
-        color: '#9ca3af',
+        color: '#71717a',
         textAlign: 'right',
         marginTop: 4
     },
@@ -382,7 +404,7 @@ const styles = StyleSheet.create({
     },
     emptyText: {
         fontSize: 16,
-        color: '#6b7280',
+        color: '#a1a1aa',
         textAlign: 'right'
     },
     clearButton: {
@@ -393,9 +415,9 @@ const styles = StyleSheet.create({
         padding: 16,
         margin: 16,
         borderRadius: 12,
-        backgroundColor: '#fef2f2',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         borderWidth: 1,
-        borderColor: '#fecaca'
+        borderColor: 'rgba(239, 68, 68, 0.3)'
     },
     clearButtonText: {
         color: '#ef4444',
@@ -407,7 +429,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         padding: 16,
         borderTopWidth: 1,
-        borderTopColor: '#f3f4f6',
+        borderTopColor: 'rgba(39, 39, 42, 0.8)',
         gap: 12
     },
     testInfo: {

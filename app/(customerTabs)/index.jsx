@@ -146,7 +146,7 @@ export default function CustomerDashboard() {
         const hour = new Date().getHours()
         if (hour >= 5 && hour < 12) return 'בוקר טוב ☀️'
         if (hour >= 12 && hour < 17) return 'צהריים טובים 🌤️'
-        if (hour >= 17 && hour < 21) return 'ערב טוב 🌙'
+        if (hour >= 17 && hour < 22) return 'ערב טוב 🌙'
         return 'לילה טוב 🌌'
     }
 
@@ -170,15 +170,27 @@ export default function CustomerDashboard() {
         try { await Linking.openURL(url) } catch { }
     }
 
+    const avatarUrl = user?.profileImageData?.url ? user.profileImageData.url.replace('/svg?', '/png?') : null
+    const [avatarError, setAvatarError] = useState(false)
+
     return (
         <ScrollView
-            style={{ backgroundColor: "#f8fafc" }}
-            contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 24 }]}
+            style={{ backgroundColor: "#09090b" }}
+            contentContainerStyle={[styles.container, { paddingBottom: tabBarHeight + 20 }]}
             refreshControl={
-                <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#2563eb" />
+                <RefreshControl
+                    refreshing={refreshing}
+                    onRefresh={onRefresh}
+                    tintColor="#ef4444"
+                    colors={['#ef4444']}
+                />
             }
             showsVerticalScrollIndicator={false}
         >
+            {/* Glowing Red Background Orbs */}
+            <View style={styles.orbTopRight} />
+            <View style={styles.orbBottomLeft} />
+
             {/* Header Welcome Bar */}
             <View style={styles.welcomeRow}>
                 <View style={styles.welcomeTextGroup}>
@@ -194,11 +206,15 @@ export default function CustomerDashboard() {
                     }}
                     style={styles.avatarButton}
                 >
-                    {user?.profileImageData?.url ? (
-                        <Image source={{ uri: user.profileImageData.url }} style={styles.avatarImg} />
+                    {avatarUrl && !avatarError ? (
+                        <Image
+                            source={{ uri: avatarUrl }}
+                            style={styles.avatarImg}
+                            onError={() => setAvatarError(true)}
+                        />
                     ) : (
                         <View style={styles.avatarPlaceholder}>
-                            <MaterialCommunityIcons name="account" size={26} color="#2563eb" />
+                            <MaterialCommunityIcons name="account" size={26} color="#ef4444" />
                         </View>
                     )}
                 </Pressable>
@@ -208,7 +224,7 @@ export default function CustomerDashboard() {
             <View style={styles.heroCard}>
                 <View style={styles.heroContent}>
                     <View style={styles.heroBadge}>
-                        <MaterialCommunityIcons name="scissors-cutting" size={14} color="#d97706" />
+                        <MaterialCommunityIcons name="scissors-cutting" size={14} color="#ef4444" />
                         <Text style={styles.heroBadgeText}>Oshri Barber Shop</Text>
                     </View>
                     <Text style={styles.heroTitle}>תספורת מושלמת.{'\n'}סטייל שמתאים לך.</Text>
@@ -225,7 +241,7 @@ export default function CustomerDashboard() {
                         ]}
                     >
                         <Text style={styles.heroCtaText}>זמן תור עכשיו</Text>
-                        <MaterialCommunityIcons name="arrow-left" size={18} color="#0f172a" />
+                        <MaterialCommunityIcons name="arrow-left" size={18} color="#ffffff" />
                     </Pressable>
                 </View>
             </View>
@@ -344,22 +360,45 @@ export default function CustomerDashboard() {
                     <Text style={styles.sectionSubtitleText}>מבחר תספורות אחרונות מהמספרה</Text>
                 </View>
 
-                <View style={styles.galleryGrid}>
-                    {gallery.map((item) => (
-                        <View key={item._id || item.id} style={styles.galleryCard}>
-                            <Image
-                                source={item.imageUrl ? { uri: item.imageUrl } : item.src}
-                                style={styles.galleryImg}
-                                resizeMode="cover"
-                            />
-                            {!!item.title && (
-                                <View style={styles.galleryOverlay}>
-                                    <Text style={styles.galleryTag}>{item.title}</Text>
-                                </View>
-                            )}
-                        </View>
-                    ))}
-                </View>
+                {gallery.length > 3 ? (
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.galleryScroll}
+                    >
+                        {gallery.map((item) => (
+                            <View key={item._id || item.id} style={styles.galleryScrollCard}>
+                                <Image
+                                    source={item.imageUrl ? { uri: item.imageUrl } : item.src}
+                                    style={styles.galleryImg}
+                                    resizeMode="cover"
+                                />
+                                {!!item.title && (
+                                    <View style={styles.galleryOverlay}>
+                                        <Text style={styles.galleryTag} numberOfLines={1}>{item.title}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        ))}
+                    </ScrollView>
+                ) : (
+                    <View style={styles.galleryGrid}>
+                        {gallery.map((item) => (
+                            <View key={item._id || item.id} style={styles.galleryCard}>
+                                <Image
+                                    source={item.imageUrl ? { uri: item.imageUrl } : item.src}
+                                    style={styles.galleryImg}
+                                    resizeMode="cover"
+                                />
+                                {!!item.title && (
+                                    <View style={styles.galleryOverlay}>
+                                        <Text style={styles.galleryTag} numberOfLines={1}>{item.title}</Text>
+                                    </View>
+                                )}
+                            </View>
+                        ))}
+                    </View>
+                )}
             </View>
 
             {/* Connect / Social Bar */}
@@ -391,7 +430,25 @@ const styles = StyleSheet.create({
     container: {
         padding: 16,
         gap: 16,
-        backgroundColor: '#f8fafc'
+        backgroundColor: '#09090b',
+    },
+    orbTopRight: {
+        position: 'absolute',
+        top: -60,
+        right: -60,
+        width: 240,
+        height: 240,
+        borderRadius: 120,
+        backgroundColor: 'rgba(239, 68, 68, 0.12)',
+    },
+    orbBottomLeft: {
+        position: 'absolute',
+        bottom: -60,
+        left: -60,
+        width: 260,
+        height: 260,
+        borderRadius: 130,
+        backgroundColor: 'rgba(220, 38, 38, 0.08)',
     },
     welcomeRow: {
         flexDirection: 'row-reverse',
@@ -405,13 +462,13 @@ const styles = StyleSheet.create({
     greetingText: {
         fontSize: 14,
         fontWeight: '600',
-        color: '#64748b',
+        color: '#a1a1aa',
         textAlign: 'right',
     },
     userNameText: {
         fontSize: 22,
         fontWeight: 'bold',
-        color: '#0f172a',
+        color: '#ffffff',
         textAlign: 'right',
     },
     avatarButton: {
@@ -422,25 +479,29 @@ const styles = StyleSheet.create({
         width: 48,
         height: 48,
         borderRadius: 24,
+        borderWidth: 1.5,
+        borderColor: 'rgba(239, 68, 68, 0.4)',
     },
     avatarPlaceholder: {
         width: 48,
         height: 48,
         borderRadius: 24,
-        backgroundColor: '#dbeafe',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#bfdbfe',
+        borderColor: 'rgba(239, 68, 68, 0.4)',
     },
     heroCard: {
-        backgroundColor: '#0f172a',
+        backgroundColor: 'rgba(24, 24, 27, 0.9)',
         borderRadius: 24,
         padding: 22,
-        shadowColor: '#0f172a',
-        shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.25,
-        shadowRadius: 16,
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.3)',
+        shadowColor: '#ef4444',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
         elevation: 6,
     },
     heroContent: {
@@ -451,15 +512,15 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: 6,
         alignSelf: 'flex-end',
-        backgroundColor: 'rgba(217, 119, 6, 0.15)',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         paddingHorizontal: 10,
         paddingVertical: 4,
         borderRadius: 20,
         borderWidth: 1,
-        borderColor: '#d97706',
+        borderColor: 'rgba(239, 68, 68, 0.4)',
     },
     heroBadgeText: {
-        color: '#f59e0b',
+        color: '#ef4444',
         fontSize: 12,
         fontWeight: 'bold',
     },
@@ -471,7 +532,7 @@ const styles = StyleSheet.create({
         lineHeight: 32,
     },
     heroSubtitle: {
-        color: '#94a3b8',
+        color: '#a1a1aa',
         fontSize: 14,
         textAlign: 'right',
     },
@@ -480,14 +541,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         gap: 8,
-        backgroundColor: '#d4af37',
+        backgroundColor: '#dc2626',
         paddingVertical: 14,
         paddingHorizontal: 20,
         borderRadius: 16,
         marginTop: 8,
+        shadowColor: '#dc2626',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.35,
+        shadowRadius: 8,
+        elevation: 4,
     },
     heroCtaText: {
-        color: '#0f172a',
+        color: '#ffffff',
         fontSize: 16,
         fontWeight: 'bold',
     },
@@ -498,16 +564,16 @@ const styles = StyleSheet.create({
     },
     actionTile: {
         flex: 1,
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         borderRadius: 18,
         padding: 14,
         alignItems: 'center',
         gap: 8,
         borderWidth: 1,
-        borderColor: '#e2e8f0',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
+        shadowOpacity: 0.1,
         shadowRadius: 6,
         elevation: 2,
     },
@@ -521,19 +587,19 @@ const styles = StyleSheet.create({
     actionTileTitle: {
         fontSize: 13,
         fontWeight: 'bold',
-        color: '#0f172a',
+        color: '#ffffff',
         textAlign: 'center',
     },
     upcomingCard: {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.9)',
         borderRadius: 20,
         padding: 16,
         gap: 12,
         borderWidth: 1.5,
-        borderColor: '#93c5fd',
-        shadowColor: '#2563eb',
+        borderColor: 'rgba(239, 68, 68, 0.4)',
+        shadowColor: '#ef4444',
         shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.08,
+        shadowOpacity: 0.15,
         shadowRadius: 10,
         elevation: 3,
     },
@@ -546,18 +612,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row-reverse',
         alignItems: 'center',
         gap: 4,
-        backgroundColor: '#dbeafe',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         paddingHorizontal: 8,
         paddingVertical: 3,
         borderRadius: 12,
     },
     upcomingBadgeText: {
-        color: '#2563eb',
+        color: '#ef4444',
         fontSize: 12,
         fontWeight: 'bold',
     },
     upcomingDate: {
-        color: '#0f172a',
+        color: '#ffffff',
         fontSize: 14,
         fontWeight: 'bold',
     },
@@ -570,35 +636,37 @@ const styles = StyleSheet.create({
     upcomingService: {
         fontSize: 16,
         fontWeight: 'bold',
-        color: '#0f172a',
+        color: '#ffffff',
         textAlign: 'right',
     },
     upcomingBarber: {
         fontSize: 13,
-        color: '#64748b',
+        color: '#a1a1aa',
         textAlign: 'right',
     },
     viewApptBtn: {
-        backgroundColor: '#f1f5f9',
+        backgroundColor: 'rgba(239, 68, 68, 0.15)',
         paddingHorizontal: 12,
         paddingVertical: 8,
         borderRadius: 10,
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.3)',
     },
     viewApptBtnText: {
         fontSize: 13,
         fontWeight: 'bold',
-        color: '#2563eb',
+        color: '#ef4444',
     },
     sectionCard: {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         borderRadius: 20,
         padding: 18,
         gap: 14,
         borderWidth: 1,
-        borderColor: '#e2e8f0',
-        shadowColor: '#0f172a',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.03,
+        shadowOpacity: 0.1,
         shadowRadius: 6,
         elevation: 2,
     },
@@ -613,7 +681,7 @@ const styles = StyleSheet.create({
     sectionTitleText: {
         fontSize: 17,
         fontWeight: 'bold',
-        color: '#0f172a',
+        color: '#ffffff',
         textAlign: 'right',
     },
     newBadgeDot: {
@@ -629,7 +697,7 @@ const styles = StyleSheet.create({
     },
     sectionSubtitleText: {
         fontSize: 13,
-        color: '#64748b',
+        color: '#a1a1aa',
         textAlign: 'right',
     },
     announcementsList: {
@@ -638,11 +706,11 @@ const styles = StyleSheet.create({
     announcementItem: {
         flexDirection: 'row-reverse',
         gap: 12,
-        backgroundColor: '#f8fafc',
+        backgroundColor: '#27272a',
         borderRadius: 16,
         padding: 12,
         borderWidth: 1,
-        borderColor: '#f1f5f9',
+        borderColor: 'rgba(239, 68, 68, 0.2)',
     },
     announcementIconWrap: {
         width: 40,
@@ -663,24 +731,24 @@ const styles = StyleSheet.create({
     announcementTitle: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#0f172a',
+        color: '#ffffff',
         textAlign: 'right',
     },
     pulseDot: {
         width: 8,
         height: 8,
         borderRadius: 4,
-        backgroundColor: '#d97706',
+        backgroundColor: '#ef4444',
     },
     announcementText: {
         fontSize: 13,
-        color: '#334155',
+        color: '#d4d4d8',
         textAlign: 'right',
         lineHeight: 18,
     },
     announcementTime: {
         fontSize: 11,
-        color: '#94a3b8',
+        color: '#a1a1aa',
         textAlign: 'right',
         marginTop: 2,
     },
@@ -694,7 +762,24 @@ const styles = StyleSheet.create({
         borderRadius: 16,
         overflow: 'hidden',
         position: 'relative',
-        backgroundColor: '#e2e8f0',
+        backgroundColor: '#27272a',
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.25)',
+    },
+    galleryScroll: {
+        flexDirection: 'row-reverse',
+        gap: 10,
+        paddingVertical: 2,
+    },
+    galleryScrollCard: {
+        width: 120,
+        height: 120,
+        borderRadius: 16,
+        overflow: 'hidden',
+        position: 'relative',
+        backgroundColor: '#27272a',
+        borderWidth: 1,
+        borderColor: 'rgba(239, 68, 68, 0.25)',
     },
     galleryImg: {
         width: '100%',
@@ -705,7 +790,7 @@ const styles = StyleSheet.create({
         bottom: 0,
         left: 0,
         right: 0,
-        backgroundColor: 'rgba(15, 23, 42, 0.7)',
+        backgroundColor: 'rgba(9, 9, 11, 0.8)',
         paddingVertical: 4,
         paddingHorizontal: 6,
         alignItems: 'center',
@@ -716,18 +801,18 @@ const styles = StyleSheet.create({
         fontWeight: '600',
     },
     socialBarCard: {
-        backgroundColor: '#ffffff',
+        backgroundColor: 'rgba(24, 24, 27, 0.85)',
         borderRadius: 20,
         padding: 16,
         gap: 12,
         alignItems: 'center',
         borderWidth: 1,
-        borderColor: '#e2e8f0',
+        borderColor: 'rgba(239, 68, 68, 0.25)',
     },
     socialTitle: {
         fontSize: 14,
         fontWeight: 'bold',
-        color: '#0f172a',
+        color: '#ffffff',
         textAlign: 'center',
     },
     socialButtonsRow: {

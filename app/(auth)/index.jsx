@@ -21,7 +21,7 @@ export default function AuthLandingIndex() {
 
     const gallery = [
         { id: '1', src: require('../../assets/gallery/cut1.jpeg'), title: 'פייד קלאסי' },
-        { id: '2', src: require('../../assets/gallery/cut2.jpeg'), title: 'עיצוב זקן' },
+        { id: '2', src: require('../../assets/gallery/cut2.jpg'), title: 'עיצוב זקן' },
         { id: '3', src: require('../../assets/gallery/cut3.jpeg'), title: 'טקסטורה מודרנית' },
     ];
 
@@ -99,7 +99,7 @@ export default function AuthLandingIndex() {
                     <View style={styles.aboutHeaderRow}>
                         <MaterialCommunityIcons name="content-cut" size={isSmallScreen ? 18 : 22} color="#ef4444" />
                         <Text style={[styles.aboutCardTitle, { fontSize: isSmallScreen ? 14.5 : 16 }]}>
-                            קצת על אושרי הספר ✂️
+                            קצת עליי ✂️
                         </Text>
                     </View>
                     <Text style={[
