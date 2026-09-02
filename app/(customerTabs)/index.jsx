@@ -48,7 +48,7 @@ export default function CustomerDashboard() {
 
     const DEFAULT_GALLERY = [
         { _id: '1', src: require('../../assets/gallery/cut1.jpeg'), title: 'פייד קלאסי' },
-        { _id: '2', src: require('../../assets/gallery/cut2.jpeg'), title: 'עיצוב זקן' },
+        { _id: '2', src: require('../../assets/gallery/cut2.jpg'), title: 'עיצוב זקן' },
         { _id: '3', src: require('../../assets/gallery/cut3.jpeg'), title: 'טקסטורה מודרנית' },
     ]
 
