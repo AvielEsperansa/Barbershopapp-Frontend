@@ -1,9 +1,13 @@
 import { Stack } from "expo-router";
 import { useEffect } from "react";
-import { AppState } from "react-native";
+import { AppState, I18nManager } from "react-native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import notificationManager from "../lib/notificationManager";
 import tokenManager from "../lib/tokenManager";
+
+// Disable global forceRTL to prevent double-reversing explicit row-reverse stylesheets
+I18nManager.allowRTL(false);
+I18nManager.forceRTL(false);
 
 export default function RootLayout() {
   useEffect(() => {

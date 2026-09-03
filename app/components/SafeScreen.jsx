@@ -3,17 +3,19 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-export default function SafeScreen({ children, paddingTop, backgroundColor = '#09090b', statusBarStyle = 'light' }) {
+export default function SafeScreen({ children, paddingTop, paddingBottom, backgroundColor = '#09090b', statusBarStyle = 'light' }) {
     const insets = useSafeAreaInsets();
     
-    // Ensure top inset is handled seamlessly without leaving empty gaps at top
+    // Ensure top and bottom insets are handled seamlessly without leaving empty gaps or overlapping
     const topInsetPadding = paddingTop !== undefined ? paddingTop : Math.max(insets.top, 12);
+    const bottomInsetPadding = paddingBottom !== undefined ? paddingBottom : Math.max(insets.bottom, 0);
 
     return (
         <View style={[
             styles.container,
             {
                 paddingTop: topInsetPadding,
+                paddingBottom: bottomInsetPadding,
                 paddingLeft: insets.left,
                 paddingRight: insets.right,
                 backgroundColor: backgroundColor

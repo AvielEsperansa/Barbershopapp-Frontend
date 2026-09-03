@@ -2,11 +2,15 @@ import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { Tabs } from 'expo-router'
 import React from 'react'
 import { Platform, StatusBar } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import SafeScreen from '../components/SafeScreen'
 
 export default function _layout() {
+    const insets = useSafeAreaInsets()
+    const bottomInset = Math.max(insets.bottom, Platform.OS === 'android' ? 10 : 0)
+
     return (
-        <SafeScreen backgroundColor="#09090b" >
+        <SafeScreen backgroundColor="#09090b" paddingBottom={0}>
             <StatusBar barStyle="light-content" backgroundColor="#09090b" translucent={false} />
             <Tabs
                 screenOptions={{
@@ -14,10 +18,18 @@ export default function _layout() {
                     tabBarShowLabel: true,
                     tabBarActiveTintColor: '#ef4444',
                     tabBarInactiveTintColor: '#71717a',
-                    tabBarStyle: Platform.select({
-                        ios: { position: "absolute", backgroundColor: "#18181b", borderTopColor: "rgba(239, 68, 68, 0.25)", height: 75 },
-                        default: { backgroundColor: "#18181b", borderTopColor: "rgba(239, 68, 68, 0.25)", height: 75 },
-                    }),
+                    tabBarLabelStyle: {
+                        fontSize: 11,
+                        fontWeight: '600',
+                        marginBottom: Platform.OS === 'android' ? 4 : 0,
+                    },
+                    tabBarStyle: {
+                        backgroundColor: "#18181b",
+                        borderTopColor: "rgba(239, 68, 68, 0.25)",
+                        height: 60 + bottomInset,
+                        paddingBottom: bottomInset > 0 ? bottomInset : 8,
+                        paddingTop: 8,
+                    },
                 }}
             >
                 <Tabs.Screen name="index" options={{

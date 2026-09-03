@@ -20,47 +20,42 @@
       }
     },
     "edgeToEdgeEnabled": true,
+    "web": {
+      "bundler": "metro",
+      "output": "static",
+      "favicon": "./assets/images/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#ffffff"
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/images/notification-icon.png",
+          "color": "#3b82f6",
+          "defaultChannel": "barbershop-notifications"
+        }
+      ],
+      "expo-font",
+      "expo-web-browser"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    },
     "extra": {
+      "router": {},
       "eas": {
         "projectId": "9f0b8351-34e8-471c-9a00-a9f4fcb3ef13"
       }
-    }
-  },
-  "web": {
-    "bundler": "metro",
-    "output": "static",
-    "favicon": "./assets/images/favicon.png"
-  },
-  "plugins": [
-    "expo-router",
-    [
-      "expo-splash-screen",
-      {
-        "image": "./assets/images/splash-icon.png",
-        "imageWidth": 200,
-        "resizeMode": "contain",
-        "backgroundColor": "#ffffff"
-      }
-    ],
-    [
-      "expo-notifications",
-      {
-        "icon": "./assets/images/notification-icon.png",
-        "color": "#3b82f6",
-        "defaultChannel": "barbershop-notifications"
-      }
-    ],
-    "expo-font",
-    "expo-web-browser"
-  ],
-  "experiments": {
-    "typedRoutes": true
-  },
-  "extra": {
-    "router": {},
-    "eas": {
-      "projectId": "b130536c-9062-4374-8347-0db6f8065795"
-    }
-  },
-  "owner": "avieles100"
+    },
+    "owner": "avieles100"
+  }
 }

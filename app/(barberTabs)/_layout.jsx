@@ -1,41 +1,36 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons'
 import { Tabs } from 'expo-router'
 import React from 'react'
-import { Platform } from 'react-native'
+import { Platform, StatusBar } from 'react-native'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import SafeScreen from '../components/SafeScreen'
 
 export default function _layout() {
+    const insets = useSafeAreaInsets()
+    const bottomInset = Math.max(insets.bottom, Platform.OS === 'android' ? 10 : 0)
+
     return (
-        <SafeScreen backgroundColor="#0f172a" statusBarStyle="light">
+        <SafeScreen backgroundColor="#09090b" statusBarStyle="light" paddingBottom={0}>
+            <StatusBar barStyle="light-content" backgroundColor="#09090b" translucent={false} />
             <Tabs
                 screenOptions={{
                     headerShown: false,
                     tabBarShowLabel: true,
-                    tabBarActiveTintColor: '#3b82f6',
-                    tabBarInactiveTintColor: '#64748b',
+                    tabBarActiveTintColor: '#ef4444',
+                    tabBarInactiveTintColor: '#71717a',
                     tabBarLabelStyle: {
                         fontSize: 11,
                         fontWeight: '600',
+                        marginBottom: Platform.OS === 'android' ? 4 : 0,
                     },
-                    tabBarStyle: Platform.select({
-                        ios: {
-                            position: 'absolute',
-                            backgroundColor: '#0f172a',
-                            borderTopColor: 'rgba(59, 130, 246, 0.15)',
-                            borderTopWidth: 1,
-                            height: 80,
-                            paddingBottom: 22,
-                            paddingTop: 8,
-                        },
-                        default: {
-                            backgroundColor: '#0f172a',
-                            borderTopColor: 'rgba(59, 130, 246, 0.15)',
-                            borderTopWidth: 1,
-                            height: 68,
-                            paddingBottom: 10,
-                            paddingTop: 8,
-                        },
-                    }),
+                    tabBarStyle: {
+                        backgroundColor: '#18181b',
+                        borderTopColor: 'rgba(239, 68, 68, 0.25)',
+                        borderTopWidth: 1,
+                        height: 60 + bottomInset,
+                        paddingBottom: bottomInset > 0 ? bottomInset : 8,
+                        paddingTop: 8,
+                    },
                 }}
             >
                 <Tabs.Screen name="Dashboard" options={{
